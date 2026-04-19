@@ -1,0 +1,54 @@
+# ==============================================================================
+#  __   __      _____      _    ____
+#  \ \ / /     / ____|    | |  / ___|
+#   \ V /_____| (___   ___| |_| (___  _ __   __ ___      _ _ __
+#    > <______|  \___ \ / _ \ __|\___ | '_ \ / _` \ \ /\ / / '_ \
+#   / . \      ____) |  __/ |_ ____) | |_) | (_| |\ V  V /| | | |
+#  /_/ \_\    |_____/ \___|\___|_____/| .__/ \__,_| \_/\_/ |_| |_|
+#                                     | |
+#                                     |_|
+# ==============================================================================
+# X-SetSpawn (BungeeCord) | Developed by Fabian (X Proyects)
+# Discord: https://discord.gg/Yb6GsfGWmd
+# ==============================================================================
+# This plugin is for the BungeeCord PROXY.
+# For backend server features (particles, economy, delays, etc.),
+# install the Bukkit version on your Paper/Spigot servers.
+# ==============================================================================
+
+# Internal config version. DO NOT CHANGE!
+# If this is lower than the plugin's version, the config will auto-update.
+config-code: 6
+
+# Global prefix for all plugin messages.
+prefix: "&8[&bX-SetSpawn&8]&r "
+
+# Plugin language.
+# Available: EN (English), ES (Spanish)
+# Language files are located in: plugins/X-SetSpawn/messages/
+language: EN
+
+# Show the 'Sending you to {server}...' message on cross-server jumps?
+show-connecting-message: true
+
+# Command aliases to register. Each alias will work as a separate command.
+# All aliases connect the player to the target server above.
+aliases:
+  - hub
+  - lobby
+
+# Cooldown between uses (in seconds, 0 = no cooldown)
+cooldown: 3
+
+# Delay (in milliseconds) before sending the teleport message when JOINING the proxy.
+teleport-delay-join: 0
+
+# Delay (in milliseconds) before sending the teleport message when SWITCHING servers.
+teleport-delay-switch: 200
+
+# Enable detailed debug logging in the proxy console?
+debug: false
+
+# Enable anonymous plugin statistics via bStats?
+# https://bstats.org/plugin/bungeecord/X-SetSpawn/30831
+metrics: true

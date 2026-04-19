@@ -1,0 +1,87 @@
+package com.fabian.xsetspawn.managers;
+
+import com.fabian.xsetspawn.XSetSpawn;
+import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandMap;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginCommand;
+
+import java.lang.reflect.Field;
+import java.util.List;
+
+/**
+ * AliasManager - Registers custom command aliases from config.yml at runtime.
+ *
+ * Admins can define their own aliases for /spawn, /setspawn, and /xsetspawn:
+ *
+ *   command-aliases:
+ *     spawn:    [hub, lobby]
+ *     setspawn: []
+ *     xsetspawn: [xss2]
+ *
+ * These are registered into Bukkit's CommandMap at server startup.
+ */
+public class AliasManager {
+
+    private final XSetSpawn plugin;
+
+    public AliasManager(XSetSpawn plugin) {
+        this.plugin = plugin;
+    }
+
+    public void registerAliases() {
+        List<String> spawnAliases = plugin.getConfig().getStringList("command-aliases.spawn");
+        List<String> setSpawnAliases = plugin.getConfig().getStringList("command-aliases.setspawn");
+        List<String> adminAliases = plugin.getConfig().getStringList("command-aliases.xsetspawn");
+
+        register("spawn", spawnAliases);
+        register("setspawn", setSpawnAliases);
+        register("xsetspawn", adminAliases);
+
+        if (!spawnAliases.isEmpty() || !setSpawnAliases.isEmpty() || !adminAliases.isEmpty()) {
+            plugin.log("&aCustom command aliases registered from config.yml.");
+        }
+    }
+
+    private void register(String commandName, List<String> aliases) {
+        if (aliases == null || aliases.isEmpty()) return;
+
+        PluginCommand pluginCommand = plugin.getCommand(commandName);
+        if (pluginCommand == null) return;
+
+        CommandMap commandMap = getCommandMap();
+        if (commandMap == null) return;
+
+        for (String alias : aliases) {
+            String cleaned = alias.toLowerCase().trim().replace("/", "");
+            if (cleaned.isEmpty()) continue;
+
+            // Pass-through command that delegates to the original
+            Command proxy = new Command(cleaned) {
+                @Override
+                public boolean execute(CommandSender sender, String label, String[] args) {
+                    return pluginCommand.execute(sender, label, args);
+                }
+            };
+            proxy.setDescription("Alias for /" + commandName + " (X-SetSpawn)");
+
+            try {
+                commandMap.register(plugin.getName().toLowerCase(), proxy);
+            } catch (Exception e) {
+                plugin.getLogger().warning("Could not register alias '" + cleaned + "': " + e.getMessage());
+            }
+        }
+    }
+
+    private CommandMap getCommandMap() {
+        try {
+            Field field = Bukkit.getServer().getClass().getDeclaredField("commandMap");
+            field.setAccessible(true);
+            return (CommandMap) field.get(Bukkit.getServer());
+        } catch (Exception e) {
+            plugin.getLogger().warning("Could not access CommandMap: " + e.getMessage());
+            return null;
+        }
+    }
+}

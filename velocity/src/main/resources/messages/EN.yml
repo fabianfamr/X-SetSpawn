@@ -1,0 +1,10 @@
+# X-SetSpawn (Velocity) - English Messages
+
+
+connecting: "&aSending you to &e{server}&a..."
+cooldown: "&cPlease wait &e{time}s &cbefore using this again."
+server-not-found: "&cServer '{server}' not found!"
+player-only: "&cThis command can only be used by players."
+already-connected: "&eYou are already connected to this server!"
+connection-failed: "&cCould not connect to &e{server}&c. Please try again."
+lobby-set: "&aGlobal lobby server has been set to: &e{server}"

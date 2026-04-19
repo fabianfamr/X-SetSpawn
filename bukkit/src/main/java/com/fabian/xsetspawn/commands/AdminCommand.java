@@ -1,0 +1,154 @@
+package com.fabian.xsetspawn.commands;
+
+import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.managers.LanguageManager;
+import com.fabian.xsetspawn.managers.ManagerConfig;
+import com.fabian.xsetspawn.managers.Permission;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class AdminCommand implements CommandExecutor, TabCompleter {
+
+    private final XSetSpawn plugin;
+    private final LanguageManager languageManager;
+    private final ManagerConfig config;
+
+    public AdminCommand(XSetSpawn plugin) {
+        this.plugin = plugin;
+        this.languageManager = plugin.getLanguageManager();
+        this.config = plugin.getManagerConfig();
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!Permission.ADMIN.has(sender)) {
+            sender.sendMessage(languageManager.getMessage("no-permission"));
+            return true;
+        }
+
+        if (args.length == 0) {
+            showHelp(sender);
+            return true;
+        }
+
+        String subCommand = args[0].toLowerCase();
+
+        switch (subCommand) {
+            case "reload":
+            case "rl":
+                if (!Permission.RELOAD.has(sender)) {
+                    sender.sendMessage(languageManager.getMessage("no-permission"));
+                    return true;
+                }
+                config.reload();
+                plugin.getConfigManager().reloadConfiguration();
+                plugin.getLanguageManager().reloadLanguage();
+                plugin.setupMetrics();
+                sender.sendMessage(languageManager.getMessage("config-reloaded"));
+                break;
+
+            case "update":
+            case "upd":
+                if (!Permission.UPDATE.has(sender)) {
+                    sender.sendMessage(languageManager.getMessage("no-permission"));
+                    return true;
+                }
+                if (plugin.getUpdateChecker() != null) {
+                    sender.sendMessage(languageManager.getMessage("update-checking"));
+                    plugin.getUpdateChecker().checkForUpdates(sender);
+                } else {
+                    sender.sendMessage(languageManager.getMessage("update-disabled"));
+                }
+                break;
+
+            case "version":
+            case "v":
+            case "ver":
+                sender.sendMessage(languageManager.getMessageUnprefixed("version-header"));
+                sender.sendMessage(languageManager.getMessageUnprefixed("version-title"));
+                sender.sendMessage(languageManager.getMessageUnprefixed("version-info-version", plugin.getDescription().getVersion()));
+                sender.sendMessage(languageManager.getMessageUnprefixed("version-info-author", String.join(", ", plugin.getDescription().getAuthors())));
+                sender.sendMessage(languageManager.getMessageUnprefixed("version-info-platform", (plugin.getServer().getName().contains("Folia") ? "Folia" : "Bukkit/Paper")));
+                sender.sendMessage(languageManager.getMessageUnprefixed("version-footer"));
+                break;
+
+            case "setspawn":
+                // Bypass ADMIN check for this specific subcommand, relying on SETSPAWN check inside SetSpawnCommand
+                String[] setSpawnArgs = new String[args.length - 1];
+                System.arraycopy(args, 1, setSpawnArgs, 0, args.length - 1);
+                plugin.getCommand("setspawn").getExecutor().onCommand(sender, command, "setspawn", setSpawnArgs);
+                break;
+
+            case "delspawn":
+            case "removespawn":
+            case "ds":
+                // Bypass ADMIN check, relying on SETSPAWN check inside DelSpawnCommand
+                String[] delSpawnArgs = new String[args.length - 1];
+                System.arraycopy(args, 1, delSpawnArgs, 0, args.length - 1);
+                plugin.getCommand("delspawn").getExecutor().onCommand(sender, command, "delspawn", delSpawnArgs);
+                break;
+
+            case "help":
+            case "h":
+            case "?":
+            default:
+                showHelp(sender);
+                break;
+        }
+
+        return true;
+    }
+
+    private void showHelp(CommandSender sender) {
+        sender.sendMessage(languageManager.getMessageUnprefixed("help-header"));
+        sender.sendMessage(languageManager.getMessageUnprefixed("help-spawn"));
+        sender.sendMessage(languageManager.getMessageUnprefixed("help-setspawn"));
+        sender.sendMessage(languageManager.getMessageUnprefixed("help-delspawn"));
+        sender.sendMessage(languageManager.getMessageUnprefixed("help-back"));
+        sender.sendMessage(languageManager.getMessageUnprefixed("help-reload"));
+        sender.sendMessage(languageManager.getMessageUnprefixed("help-version"));
+        sender.sendMessage(languageManager.getMessageUnprefixed("help-update"));
+        sender.sendMessage(languageManager.getMessageUnprefixed("help-help"));
+        sender.sendMessage(languageManager.getMessageUnprefixed("help-footer"));
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (!Permission.ADMIN.has(sender)) {
+            return Collections.emptyList();
+        }
+
+        if (args.length == 1) {
+            List<String> completions = new ArrayList<>();
+            completions.add("reload");
+            completions.add("version");
+            completions.add("update");
+            completions.add("help");
+            completions.add("setspawn");
+            completions.add("delspawn");
+
+            return completions.stream()
+                    .filter(s -> s.toLowerCase().startsWith(args[0].toLowerCase()))
+                    .sorted()
+                    .collect(Collectors.toList());
+        }
+
+        // Suggest existing named spawn names for /xss delspawn <TAB>
+        if (args.length == 2 && args[0].equalsIgnoreCase("delspawn")) {
+            List<String> names = plugin.getSpawnManager().getAllNamedSpawnNames();
+            return names.stream()
+                    .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
+                    .sorted()
+                    .collect(Collectors.toList());
+        }
+        return Collections.emptyList();
+    }
+}
+

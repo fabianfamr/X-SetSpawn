@@ -1,0 +1,75 @@
+name: X-SetSpawn
+version: 2.0
+main: com.fabian.xsetspawn.XSetSpawn
+api-version: "1.13"
+folia-supported: true
+authors: [Fabian]
+description: "The ultimate spawn management plugin for Paper, Purpur, Folia & Bukkit (1.8.8 - 26.1+)."
+website: https://xproyects.qzz.io
+
+commands:
+  spawn:
+    description: Teleport to the server spawn point.
+    usage: /spawn
+    aliases: []
+
+  setspawn:
+    description: Set the spawn point at your current location.
+    usage: /setspawn
+    aliases: [ss]
+
+  xsetspawn:
+    description: Main admin command for X-SetSpawn.
+    usage: /xsetspawn <reload|update|version|help|delspawn|setspawn>
+    aliases: [xss]
+
+  delspawn:
+    description: Delete a named spawn point.
+    usage: /delspawn <name>
+    aliases: [removespawn, ds]
+
+  back:
+    description: Return to your previous location before using /spawn.
+    usage: /back
+    aliases: []
+
+permissions:
+  xsetspawn.spawn:
+    description: Allows using /spawn to teleport to spawn.
+    default: true
+
+  xsetspawn.setspawn:
+    description: Allows using /setspawn to set the spawn point.
+    default: op
+
+  xsetspawn.delspawn:
+    description: Allows using /delspawn to delete a named spawn point.
+    default: op
+    
+  xsetspawn.admin:
+    description: Full admin access and update notifications on join.
+    default: op
+
+  xsetspawn.reload:
+    description: Allows reloading the plugin configuration with /xss reload.
+    default: op
+
+  xsetspawn.update:
+    description: Allows checking for plugin updates with /xss update.
+    default: op
+
+  xsetspawn.bypass.cooldown:
+    description: Bypass the /spawn cooldown.
+    default: op
+
+  xsetspawn.bypass.delay:
+    description: Bypass the teleport countdown delay.
+    default: op
+
+  xsetspawn.bypass.economy:
+    description: Teleport to spawn for free, ignoring economy cost.
+    default: op
+
+  xsetspawn.back:
+    description: Allows using /back to return to the previous location.
+    default: true
