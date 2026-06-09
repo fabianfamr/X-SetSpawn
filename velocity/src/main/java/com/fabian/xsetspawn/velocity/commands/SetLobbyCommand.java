@@ -24,7 +24,7 @@ public class SetLobbyCommand implements SimpleCommand {
     @Override
     public void execute(Invocation invocation) {
         if (!invocation.source().hasPermission("xsetspawn.admin")) {
-            invocation.source().sendMessage(LEGACY.deserialize("§cNo tienes permiso para usar este comando."));
+            invocation.source().sendMessage(LEGACY.deserialize(plugin.getPrefix() + plugin.getMsgNoPermission()));
             return;
         }
 
@@ -36,7 +36,7 @@ public class SetLobbyCommand implements SimpleCommand {
 
         if (player.getCurrentServer().isEmpty()) {
             player.sendMessage(LEGACY.deserialize(
-                    plugin.getPrefix() + "§cError: Could not determine current server."));
+                    plugin.getPrefix() + plugin.getMsgErrorNoServer()));
             return;
         }
 

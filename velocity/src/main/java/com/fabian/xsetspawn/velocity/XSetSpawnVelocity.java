@@ -20,6 +20,7 @@ import com.velocitypowered.api.scheduler.ScheduledTask;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.ByteArrayDataInput;
 import com.fabian.xsetspawn.velocity.commands.HubCommand;
+import com.fabian.xsetspawn.velocity.commands.ReloadCommand;
 import com.fabian.xsetspawn.velocity.commands.SetLobbyCommand;
 import com.fabian.xsetspawn.velocity.utils.UpdateChecker;
 import com.fabian.xsetspawn.velocity.metrics.Metrics;
@@ -49,7 +50,7 @@ public class XSetSpawnVelocity {
     private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
 
     // Expected config-code version. If the user's file has a lower value, it gets rebuilt.
-    private static final int EXPECTED_CONFIG_CODE = 6;
+    private static final int EXPECTED_CONFIG_CODE = 7;
 
     private final ProxyServer server;
     private final Logger logger;
@@ -59,12 +60,13 @@ public class XSetSpawnVelocity {
 
     // Config values
     private String targetServer = "lobby";
-    private List<String> aliases = new ArrayList<>(Arrays.asList("hub", "lobby"));
+    private Map<String, String> aliasServers = new LinkedHashMap<>();
     private int cooldownSeconds = 3;
     private int joinTeleportDelay = 0;
-    private int switchTeleportDelay = 500;
+    private int switchTeleportDelay = 200;
     private boolean debugEnabled = false;
     private boolean showConnectingMessage = true;
+    private boolean connectOnFirstJoin = true;
     private String language = "EN";
 
     // Global Lobby Location (synced from Bukkit)
@@ -82,6 +84,10 @@ public class XSetSpawnVelocity {
     private String msgAlreadyConnected = "§eYou are already connected to this server!";
     private String msgConnectionFailed = "§cCould not connect to §e{server}§c. Please try again.";
     private String msgLobbySet = "§aGlobal lobby server has been set to: §e{server}";
+    private String msgNoPermission = "§cYou don't have permission to use this command.";
+    private String msgErrorNoServer = "§cError: Could not determine current server.";
+    private String msgReloadSuccess = "§aConfiguration and messages reloaded successfully!";
+    private String msgReloadHelp = "§e/xssproxy reload §7- §fReload the plugin configuration and messages";
 
     // Cooldowns and pending tasks
     private final Map<UUID, Long> cooldowns = new java.util.concurrent.ConcurrentHashMap<>();
@@ -115,16 +121,19 @@ public class XSetSpawnVelocity {
         CommandMeta setLobbyMeta = commandManager.metaBuilder("setlobby").aliases("sl").build();
         commandManager.register(setLobbyMeta, new SetLobbyCommand(this));
 
-        HubCommand hubCommand = new HubCommand(this);
-        for (String alias : aliases) {
-            CommandMeta meta = commandManager.metaBuilder(alias).build();
-            commandManager.register(meta, hubCommand);
+        CommandMeta reloadMeta = commandManager.metaBuilder("xssproxy").build();
+        commandManager.register(reloadMeta, new ReloadCommand(this));
+
+        for (Map.Entry<String, String> entry : aliasServers.entrySet()) {
+            HubCommand cmd = new HubCommand(this, entry.getValue());
+            CommandMeta meta = commandManager.metaBuilder(entry.getKey()).build();
+            commandManager.register(meta, cmd);
         }
 
         server.getConsoleCommandSource().sendMessage(LEGACY.deserialize("&b----------------------------------------------"));
         server.getConsoleCommandSource().sendMessage(LEGACY.deserialize("  &3X-SetSpawn &bv2.2 &aenabled! Enjoy spawning!"));
         server.getConsoleCommandSource().sendMessage(LEGACY.deserialize("  &fLanguage: &e" + language + " &f| Lobby: &e" + targetServer));
-        server.getConsoleCommandSource().sendMessage(LEGACY.deserialize("  &fCommands: &e" + aliases + " &fand &b/setlobby"));
+        server.getConsoleCommandSource().sendMessage(LEGACY.deserialize("  &fCommands: &e" + aliasServers.keySet() + " &fand &b/setlobby, &b/xssproxy"));
         server.getConsoleCommandSource().sendMessage(LEGACY.deserialize("&b----------------------------------------------"));
 
         // Check for updates
@@ -196,30 +205,42 @@ public class XSetSpawnVelocity {
 
     @Subscribe
     public void onServerConnected(com.velocitypowered.api.event.player.ServerPostConnectEvent event) {
-        if (!lobbyCoordsSet) return;
-        
         Player player = event.getPlayer();
-        player.getCurrentServer().ifPresent(serverConn -> {
-            String serverName = serverConn.getServerInfo().getName();
-            if (serverName.equalsIgnoreCase(targetServer)) {
-                // Determine delay: initial join vs server switch
-                boolean isJoin = (event.getPreviousServer() == null);
-                int delay = isJoin ? joinTeleportDelay : switchTeleportDelay;
+        if (!player.getCurrentServer().isPresent()) return;
 
-                ScheduledTask oldTask = pendingTeleports.remove(player.getUniqueId());
-                if (oldTask != null) {
-                    oldTask.cancel();
+        String serverName = player.getCurrentServer().get().getServerInfo().getName();
+
+        // Auto-connect to target server on first join
+        if (event.getPreviousServer() == null && connectOnFirstJoin && !serverName.equalsIgnoreCase(targetServer)) {
+            server.getServer(targetServer).ifPresent(target -> {
+                player.createConnectionRequest(target).connect();
+                if (debugEnabled) {
+                    logger.info("Auto-connecting {} to {} on first join.", player.getUsername(), targetServer);
                 }
+            });
+            return;
+        }
 
-                // Use configured delay as fallback (if Bukkit doesn't send PlayerReady)
-                ScheduledTask task = server.getScheduler().buildTask(this, () -> {
-                    pendingTeleports.remove(player.getUniqueId());
-                    sendGlobalLobbyTeleport(player, isJoin);
-                }).delay(delay, java.util.concurrent.TimeUnit.MILLISECONDS).schedule();
-                
-                pendingTeleports.put(player.getUniqueId(), task);
+        if (!lobbyCoordsSet) return;
+
+        if (serverName.equalsIgnoreCase(targetServer)) {
+            // Determine delay: initial join vs server switch
+            boolean isJoin = (event.getPreviousServer() == null);
+            int delay = isJoin ? joinTeleportDelay : switchTeleportDelay;
+
+            ScheduledTask oldTask = pendingTeleports.remove(player.getUniqueId());
+            if (oldTask != null) {
+                oldTask.cancel();
             }
-        });
+
+            // Use configured delay as fallback (if Bukkit doesn't send PlayerReady)
+            ScheduledTask task = server.getScheduler().buildTask(this, () -> {
+                pendingTeleports.remove(player.getUniqueId());
+                sendGlobalLobbyTeleport(player, isJoin);
+            }).delay(delay, java.util.concurrent.TimeUnit.MILLISECONDS).schedule();
+
+            pendingTeleports.put(player.getUniqueId(), task);
+        }
     }
 
     @Subscribe
@@ -374,6 +395,9 @@ public class XSetSpawnVelocity {
             // Always copy all default language files if they don't exist
             copyMessageFileIfMissing(messagesDir, "EN.yml");
             copyMessageFileIfMissing(messagesDir, "ES.yml");
+            copyMessageFileIfMissing(messagesDir, "RU.yml");
+            copyMessageFileIfMissing(messagesDir, "PT.yml");
+            copyMessageFileIfMissing(messagesDir, "JA.yml");
 
             // Load the configured language
             Path langFile = messagesDir.resolve(language + ".yml");
@@ -444,7 +468,7 @@ public class XSetSpawnVelocity {
      */
     private void parseConfig(Path configFile) throws IOException {
         List<String> lines = Files.readAllLines(configFile);
-        List<String> aliasList = new ArrayList<>();
+        Map<String, String> aliasMap = new LinkedHashMap<>();
         boolean inAliases = false;
 
         for (String line : lines) {
@@ -454,7 +478,14 @@ public class XSetSpawnVelocity {
 
             if (trimmed.startsWith("- ") && inAliases) {
                 String value = trimmed.substring(2).trim().replaceAll("[\"']", "");
-                if (!value.isEmpty()) aliasList.add(value);
+                if (!value.isEmpty()) {
+                    if (value.contains(":")) {
+                        String[] aliasParts = value.split(":", 2);
+                        aliasMap.put(aliasParts[0].trim(), aliasParts[1].trim());
+                    } else {
+                        aliasMap.put(value, targetServer);
+                    }
+                }
                 continue;
             } else if (!trimmed.startsWith("- ")) {
                 inAliases = false;
@@ -466,6 +497,9 @@ public class XSetSpawnVelocity {
                 String value = parts.length > 1 ? parts[1].trim().replaceAll("[\"']", "") : "";
 
                 switch (key) {
+                    case "target-server":
+                        this.targetServer = value;
+                        break;
                     case "cooldown":
                         try { this.cooldownSeconds = Integer.parseInt(value); } catch (NumberFormatException ignored) {}
                         break;
@@ -481,6 +515,9 @@ public class XSetSpawnVelocity {
                     case "show-connecting-message":
                         this.showConnectingMessage = value.equalsIgnoreCase("true");
                         break;
+                    case "connect-on-first-join":
+                        this.connectOnFirstJoin = value.equalsIgnoreCase("true");
+                        break;
                     case "prefix":
                         this.prefix = translateColors(value);
                         break;
@@ -489,14 +526,14 @@ public class XSetSpawnVelocity {
                         break;
                     case "aliases":
                         inAliases = true;
-                        aliasList.clear();
+                        aliasMap.clear();
                         break;
                 }
             }
         }
 
-        if (!aliasList.isEmpty()) {
-            this.aliases = aliasList;
+        if (!aliasMap.isEmpty()) {
+            this.aliasServers = aliasMap;
         }
     }
 
@@ -530,8 +567,12 @@ public class XSetSpawnVelocity {
                     case "server-not-found":  this.msgServerNotFound = value; break;
                     case "player-only":       this.msgPlayerOnly = value; break;
                     case "already-connected": this.msgAlreadyConnected = value; break;
-                    case "connection-failed":  this.msgConnectionFailed = value; break;
+                    case "connection-failed": this.msgConnectionFailed = value; break;
                     case "lobby-set":         this.msgLobbySet = value; break;
+                    case "no-permission":    this.msgNoPermission = value; break;
+                    case "error-no-server":  this.msgErrorNoServer = value; break;
+                    case "reload-success":   this.msgReloadSuccess = value; break;
+                    case "reload-help":       this.msgReloadHelp = value; break;
                 }
             }
         }
@@ -562,7 +603,12 @@ public class XSetSpawnVelocity {
     public String getMsgAlreadyConnected() { return msgAlreadyConnected; }
     public String getMsgConnectionFailed() { return msgConnectionFailed; }
     public String getMsgLobbySet() { return msgLobbySet; }
+    public String getMsgNoPermission() { return msgNoPermission; }
+    public String getMsgErrorNoServer() { return msgErrorNoServer; }
+    public String getMsgReloadSuccess() { return msgReloadSuccess; }
+    public String getMsgReloadHelp() { return msgReloadHelp; }
     public Map<UUID, Long> getCooldowns() { return cooldowns; }
+    public Map<String, String> getAliasServers() { return aliasServers; }
 
     public boolean isLobbyCoordsSet() { return lobbyCoordsSet; }
     public String getLobbyWorld() { return lobbyWorld; }
@@ -571,4 +617,34 @@ public class XSetSpawnVelocity {
     public double getLobbyZ() { return lobbyZ; }
     public float getLobbyYaw() { return lobbyYaw; }
     public float getLobbyPitch() { return lobbyPitch; }
+
+    // =========================================================================
+    // Reload
+    // =========================================================================
+
+    /**
+     * Reloads configuration, data, and messages without restarting the plugin.
+     */
+    public void reload() {
+        try {
+            Path configFile = dataDirectory.resolve("config.yml");
+            parseConfig(configFile);
+
+            loadData();
+
+            Path messagesDir = dataDirectory.resolve("messages");
+            if (!Files.exists(messagesDir)) {
+                Files.createDirectories(messagesDir);
+            }
+            Path langFile = messagesDir.resolve(language + ".yml");
+            if (!Files.exists(langFile)) {
+                langFile = messagesDir.resolve("EN.yml");
+            }
+            parseMessages(langFile);
+
+            logger.info("Configuration and messages reloaded.");
+        } catch (Exception e) {
+            logger.warn("Failed to reload: {}", e.getMessage());
+        }
+    }
 }

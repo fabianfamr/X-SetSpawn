@@ -18,10 +18,12 @@ import java.util.concurrent.CompletableFuture;
 public class HubCommand implements SimpleCommand {
 
     private final XSetSpawnVelocity plugin;
+    private final String targetServerOverride;
     private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
 
-    public HubCommand(XSetSpawnVelocity plugin) {
+    public HubCommand(XSetSpawnVelocity plugin, String targetServerOverride) {
         this.plugin = plugin;
+        this.targetServerOverride = targetServerOverride;
     }
 
     @Override
@@ -32,8 +34,9 @@ public class HubCommand implements SimpleCommand {
             return;
         }
 
-        // Check server info
-        String serverName = plugin.getTargetServer();
+        // Check server info (use override if set, otherwise default)
+        String serverName = (targetServerOverride != null && !targetServerOverride.isEmpty())
+                ? targetServerOverride : plugin.getTargetServer();
         Optional<RegisteredServer> targetServer = plugin.getServer().getServer(serverName);
 
         if (targetServer.isEmpty()) {
@@ -64,7 +67,10 @@ public class HubCommand implements SimpleCommand {
         }
 
         if (alreadyOnServer) {
-            // Already there: Just snap to coordinates (SILENT = false because it's a manual command)
+            // Show message and snap to coordinates (SILENT = false because it's a manual command)
+            String msg = plugin.getMsgAlreadyConnected().replace("{server}", serverName);
+            player.sendMessage(LEGACY.deserialize(plugin.getPrefix() + msg));
+
             com.google.common.io.ByteArrayDataOutput out = com.google.common.io.ByteStreams.newDataOutput();
             
             if (plugin.isLobbyCoordsSet()) {

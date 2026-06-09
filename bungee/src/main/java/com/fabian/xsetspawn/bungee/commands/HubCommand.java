@@ -19,10 +19,12 @@ import java.util.UUID;
 public class HubCommand extends Command {
 
     private final XSetSpawnBungee plugin;
+    private final String targetServerOverride;
 
-    public HubCommand(XSetSpawnBungee plugin, String name) {
+    public HubCommand(XSetSpawnBungee plugin, String name, String targetServerOverride) {
         super(name, "xsetspawn.lobby");
         this.plugin = plugin;
+        this.targetServerOverride = targetServerOverride;
     }
 
     @Override
@@ -36,8 +38,9 @@ public class HubCommand extends Command {
         ProxiedPlayer player = (ProxiedPlayer) sender;
         UUID uuid = player.getUniqueId();
         
-        // Find the target server
-        String serverName = plugin.getTargetServer();
+        // Find the target server (use override if set, otherwise default)
+        String serverName = (targetServerOverride != null && !targetServerOverride.isEmpty())
+                ? targetServerOverride : plugin.getTargetServer();
         ServerInfo serverInfo = ProxyServer.getInstance().getServerInfo(serverName);
 
         if (serverInfo == null) {
@@ -66,7 +69,10 @@ public class HubCommand extends Command {
         }
 
         if (alreadyOnServer) {
-            // Already there: Just snap to coordinates (SILENT = false because it's a manual command)
+            // Show message and snap to coordinates (SILENT = false because it's a manual command)
+            String msg = plugin.getMsgAlreadyConnected().replace("{server}", serverName);
+            player.sendMessage(new TextComponent(plugin.getPrefix() + msg));
+
             ByteArrayDataOutput out = ByteStreams.newDataOutput();
             
             if (plugin.isLobbyCoordsSet()) {
@@ -110,17 +116,6 @@ public class HubCommand extends Command {
     @Override
     public boolean hasPermission(CommandSender sender) {
         if (!(sender instanceof ProxiedPlayer)) return true;
-        ProxiedPlayer player = (ProxiedPlayer) sender;
-
-        // Check base permission
-        if (!player.hasPermission("xsetspawn.lobby")) return false;
-
-        // Hide if already in lobby
-        String serverName = plugin.getTargetServer();
-        if (player.getServer() != null && player.getServer().getInfo().getName().equalsIgnoreCase(serverName)) {
-            return false;
-        }
-
-        return true;
+        return ((ProxiedPlayer) sender).hasPermission("xsetspawn.lobby");
     }
 }

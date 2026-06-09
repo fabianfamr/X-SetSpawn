@@ -22,7 +22,7 @@ public class SetLobbyCommand extends Command {
     @Override
     public void execute(CommandSender sender, String[] args) {
         if (!sender.hasPermission("xsetspawn.admin")) {
-            sender.sendMessage(new TextComponent("§cNo tienes permiso para usar este comando."));
+            sender.sendMessage(new TextComponent(plugin.getPrefix() + plugin.getMsgNoPermission()));
             return;
         }
 
@@ -34,7 +34,7 @@ public class SetLobbyCommand extends Command {
         ProxiedPlayer player = (ProxiedPlayer) sender;
 
         if (player.getServer() == null) {
-            player.sendMessage(new TextComponent(plugin.getPrefix() + "§cError: Could not determine current server."));
+            player.sendMessage(new TextComponent(plugin.getPrefix() + plugin.getMsgErrorNoServer()));
             return;
         }
 

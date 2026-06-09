@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.bungee;
 
 import com.fabian.xsetspawn.bungee.commands.HubCommand;
+import com.fabian.xsetspawn.bungee.commands.ReloadCommand;
 import com.fabian.xsetspawn.bungee.commands.SetLobbyCommand;
 import com.fabian.xsetspawn.bungee.utils.UpdateChecker;
 import com.fabian.xsetspawn.bungee.metrics.Metrics;
@@ -9,6 +10,7 @@ import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.event.PluginMessageEvent;
 import net.md_5.bungee.api.connection.Server;
+import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.event.EventHandler;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.ByteArrayDataInput;
@@ -36,16 +38,17 @@ public class XSetSpawnBungee extends Plugin implements Listener {
     public static final String CHANNEL = "xsetspawn:main";
 
     // Expected config-code version. If the user's file has a lower value, it gets rebuilt.
-    private static final int EXPECTED_CONFIG_CODE = 6;
+    private static final int EXPECTED_CONFIG_CODE = 7;
 
     // Config values
     private String targetServer = "lobby";
-    private List<String> aliases = new ArrayList<>(Arrays.asList("hub", "lobby"));
+    private Map<String, String> aliasServers = new LinkedHashMap<>();
     private int cooldownSeconds = 3;
     private int joinTeleportDelay = 0;
-    private int switchTeleportDelay = 500;
+    private int switchTeleportDelay = 200;
     private boolean debugEnabled = false;
     private boolean showConnectingMessage = true;
+    private boolean connectOnFirstJoin = true;
     private String language = "EN";
 
     // Global Lobby Location (synced from Bukkit)
@@ -62,6 +65,11 @@ public class XSetSpawnBungee extends Plugin implements Listener {
     private String msgPlayerOnly = "§cThis command can only be used by players.";
     private String msgAlreadyConnected = "§eYou are already connected to this server!";
     private String msgLobbySet = "§aGlobal lobby server has been set to: §e{server}";
+    private String msgNoPermission = "§cYou don't have permission to use this command.";
+    private String msgErrorNoServer = "§cError: Could not determine current server.";
+    private String msgConnectionFailed = "§cCould not connect to §e{server}§c. Please try again.";
+    private String msgReloadSuccess = "§aConfiguration and messages reloaded successfully!";
+    private String msgReloadHelp = "§e/xssproxy reload §7- §fReload the plugin configuration and messages";
 
     // Cooldowns and pending tasks
     private final Map<UUID, Long> cooldowns = new java.util.concurrent.ConcurrentHashMap<>();
@@ -84,15 +92,16 @@ public class XSetSpawnBungee extends Plugin implements Listener {
 
         // Register commands - SetLobby first for priority
         getProxy().getPluginManager().registerCommand(this, new SetLobbyCommand(this));
+        getProxy().getPluginManager().registerCommand(this, new ReloadCommand(this));
 
-        for (String alias : aliases) {
-            getProxy().getPluginManager().registerCommand(this, new HubCommand(this, alias));
+        for (Map.Entry<String, String> entry : aliasServers.entrySet()) {
+            getProxy().getPluginManager().registerCommand(this, new HubCommand(this, entry.getKey(), entry.getValue()));
         }
 
         getLogger().info(translateColors("&b----------------------------------------------"));
         getLogger().info(translateColors("  &3X-SetSpawn &bv" + getDescription().getVersion() + " &aenabled! Enjoy spawning!"));
         getLogger().info(translateColors("  &fLanguage: &e" + language + " &f| Lobby: &e" + targetServer));
-        getLogger().info(translateColors("  &fCommands: &e" + aliases + " &fand &b/setlobby"));
+        getLogger().info(translateColors("  &fCommands: &e" + aliasServers.keySet() + " &fand &b/setlobby, &b/xssproxy"));
         getLogger().info(translateColors("&b----------------------------------------------"));
 
         // Register plugin messaging channel
@@ -174,12 +183,24 @@ public class XSetSpawnBungee extends Plugin implements Listener {
 
     @EventHandler
     public void onServerSwitch(ServerSwitchEvent event) {
-        if (!lobbyCoordsSet) return;
-        
         ProxiedPlayer player = event.getPlayer();
         if (player.getServer() == null) return;
         
         String serverName = player.getServer().getInfo().getName();
+        
+        // Auto-connect to target server on first join
+        if (event.getFrom() == null && connectOnFirstJoin && !serverName.equalsIgnoreCase(targetServer)) {
+            ServerInfo target = getProxy().getServerInfo(targetServer);
+            if (target != null) {
+                player.connect(target);
+                if (debugEnabled) {
+                    getLogger().info("Auto-connecting " + player.getName() + " to " + targetServer + " on first join.");
+                }
+            }
+            return;
+        }
+        
+        if (!lobbyCoordsSet) return;
         
         // Only trigger if they connected to the global lobby server
         if (serverName.equalsIgnoreCase(targetServer)) {
@@ -352,6 +373,9 @@ public class XSetSpawnBungee extends Plugin implements Listener {
             // Always copy all default language files if they don't exist
             copyMessageFileIfMissing(messagesDirBase, "EN.yml");
             copyMessageFileIfMissing(messagesDirBase, "ES.yml");
+            copyMessageFileIfMissing(messagesDirBase, "RU.yml");
+            copyMessageFileIfMissing(messagesDirBase, "PT.yml");
+            copyMessageFileIfMissing(messagesDirBase, "JA.yml");
 
             // Load the configured language
             File langFileBase = new File(messagesDirBase, language + ".yml");
@@ -422,7 +446,7 @@ public class XSetSpawnBungee extends Plugin implements Listener {
      */
     private void parseConfig(Path configFile) throws IOException {
         List<String> lines = Files.readAllLines(configFile);
-        List<String> aliasList = new ArrayList<>();
+        Map<String, String> aliasMap = new LinkedHashMap<>();
         boolean inAliases = false;
 
         for (String line : lines) {
@@ -432,7 +456,14 @@ public class XSetSpawnBungee extends Plugin implements Listener {
 
             if (trimmed.startsWith("- ") && inAliases) {
                 String value = trimmed.substring(2).trim().replaceAll("[\"']", "");
-                if (!value.isEmpty()) aliasList.add(value);
+                if (!value.isEmpty()) {
+                    if (value.contains(":")) {
+                        String[] aliasParts = value.split(":", 2);
+                        aliasMap.put(aliasParts[0].trim(), aliasParts[1].trim());
+                    } else {
+                        aliasMap.put(value, targetServer);
+                    }
+                }
                 continue;
             } else if (!trimmed.startsWith("- ")) {
                 inAliases = false;
@@ -444,6 +475,9 @@ public class XSetSpawnBungee extends Plugin implements Listener {
                 String value = parts.length > 1 ? parts[1].trim().replaceAll("[\"']", "") : "";
 
                 switch (key) {
+                    case "target-server":
+                        this.targetServer = value;
+                        break;
                     case "cooldown":
                         try { this.cooldownSeconds = Integer.parseInt(value); } catch (NumberFormatException ignored) {}
                         break;
@@ -459,6 +493,9 @@ public class XSetSpawnBungee extends Plugin implements Listener {
                     case "show-connecting-message":
                         this.showConnectingMessage = value.equalsIgnoreCase("true");
                         break;
+                    case "connect-on-first-join":
+                        this.connectOnFirstJoin = value.equalsIgnoreCase("true");
+                        break;
                     case "prefix":
                         this.prefix = translateColors(value);
                         break;
@@ -467,14 +504,14 @@ public class XSetSpawnBungee extends Plugin implements Listener {
                         break;
                     case "aliases":
                         inAliases = true;
-                        aliasList.clear();
+                        aliasMap.clear();
                         break;
                 }
             }
         }
 
-        if (!aliasList.isEmpty()) {
-            this.aliases = aliasList;
+        if (!aliasMap.isEmpty()) {
+            this.aliasServers = aliasMap;
         }
     }
 
@@ -508,7 +545,12 @@ public class XSetSpawnBungee extends Plugin implements Listener {
                     case "server-not-found":  this.msgServerNotFound = value; break;
                     case "player-only":       this.msgPlayerOnly = value; break;
                     case "already-connected": this.msgAlreadyConnected = value; break;
+                    case "connection-failed": this.msgConnectionFailed = value; break;
                     case "lobby-set":         this.msgLobbySet = value; break;
+                    case "no-permission":    this.msgNoPermission = value; break;
+                    case "error-no-server":  this.msgErrorNoServer = value; break;
+                    case "reload-success":   this.msgReloadSuccess = value; break;
+                    case "reload-help":       this.msgReloadHelp = value; break;
                 }
             }
         }
@@ -536,7 +578,13 @@ public class XSetSpawnBungee extends Plugin implements Listener {
     public String getMsgPlayerOnly() { return msgPlayerOnly; }
     public String getMsgAlreadyConnected() { return msgAlreadyConnected; }
     public String getMsgLobbySet() { return msgLobbySet; }
+    public String getMsgNoPermission() { return msgNoPermission; }
+    public String getMsgErrorNoServer() { return msgErrorNoServer; }
+    public String getMsgConnectionFailed() { return msgConnectionFailed; }
+    public String getMsgReloadSuccess() { return msgReloadSuccess; }
+    public String getMsgReloadHelp() { return msgReloadHelp; }
     public Map<UUID, Long> getCooldowns() { return cooldowns; }
+    public Map<String, String> getAliasServers() { return aliasServers; }
 
     public boolean isLobbyCoordsSet() { return lobbyCoordsSet; }
     public String getLobbyWorld() { return lobbyWorld; }
@@ -545,4 +593,34 @@ public class XSetSpawnBungee extends Plugin implements Listener {
     public double getLobbyZ() { return lobbyZ; }
     public float getLobbyYaw() { return lobbyYaw; }
     public float getLobbyPitch() { return lobbyPitch; }
+
+    // =========================================================================
+    // Reload
+    // =========================================================================
+
+    /**
+     * Reloads configuration, data, and messages without restarting the plugin.
+     */
+    public void reload() {
+        try {
+            File configFile = new File(getDataFolder(), "config.yml");
+            parseConfig(configFile.toPath());
+
+            loadData();
+
+            File messagesDirBase = new File(getDataFolder(), "messages");
+            if (!messagesDirBase.exists()) {
+                messagesDirBase.mkdirs();
+            }
+            File langFileBase = new File(messagesDirBase, language + ".yml");
+            if (!langFileBase.exists()) {
+                langFileBase = new File(messagesDirBase, "EN.yml");
+            }
+            parseMessages(langFileBase.toPath());
+
+            getLogger().info("Configuration and messages reloaded.");
+        } catch (Exception e) {
+            getLogger().warning("Failed to reload: " + e.getMessage());
+        }
+    }
 }
