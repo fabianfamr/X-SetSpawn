@@ -151,7 +151,6 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(languageManager.getMessageUnprefixed("help-setspawn"));
         sender.sendMessage(languageManager.getMessageUnprefixed("help-delspawn"));
         sender.sendMessage(languageManager.getMessageUnprefixed("help-back"));
-        sender.sendMessage(languageManager.getMessageUnprefixed("help-hub"));
         sender.sendMessage(languageManager.getMessageUnprefixed("help-reload"));
         sender.sendMessage(languageManager.getMessageUnprefixed("help-locate"));
         sender.sendMessage(languageManager.getMessageUnprefixed("help-version"));

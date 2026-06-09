@@ -24,8 +24,7 @@ public enum Permission {
     BACK("back"),
     DELSPAWN("delspawn"),
     LOCATE("locate"),
-    SPAWN_ON_JOIN("spawn-on-join"),
-    HUB("hub");
+    SPAWN_ON_JOIN("spawn-on-join");
 
     private final String node;
 

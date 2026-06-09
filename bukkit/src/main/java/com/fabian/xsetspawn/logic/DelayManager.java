@@ -32,7 +32,7 @@ public class DelayManager implements Listener {
     }
 
     /** Event type for particle selection */
-    public enum TeleportEvent { SPAWN, BACK, HUB }
+    public enum TeleportEvent { SPAWN, BACK }
 
     /**
      * Original signature kept for backward compatibility — defaults to SPAWN event.
@@ -149,10 +149,6 @@ public class DelayManager implements Listener {
                                     case BACK:
                                         arriveType = config.particleBackType;
                                         arriveAmountStr = String.valueOf(config.particleBackAmount);
-                                        break;
-                                    case HUB:
-                                        arriveType = config.particleHubType;
-                                        arriveAmountStr = String.valueOf(config.particleHubAmount);
                                         break;
                                     default:
                                         arriveType = config.particleSpawnType;

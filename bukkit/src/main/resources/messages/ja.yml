@@ -21,17 +21,12 @@ delspawn-usage: "&c使い方: /xss delspawn <名前>"
 back-teleport: "&a前の場所に戻りました。"
 back-no-location: "&c保存された場所がありません（または有効期限が切れました）。"
 
-# /hub /lobbyコマンド
-hub-teleport: "&eロビー&aにテレポートしました。"
-hub-not-set: "&cロビーのスポーン地点がまだ設定されていません。&e/setspawn lobby &cで設定してください。"
-
 # ヘルプ
 help-header: "&8&m      &b [ &3X-SetSpawn ヘルプ &b] &8&m      "
 help-spawn: "&8» &b/spawn &7- スポーン地点にテレポート"
 help-setspawn: "&8» &b/setspawn &7- グローバルスポーンを設定"
 help-delspawn: "&8» &b/delspawn &7- スポーンを削除"
 help-back: "&8» &b/back &7- 前の場所に戻る"
-help-hub: "&8» &b/hub &7- ロビーへ移動"
 help-reload: "&8» &b/xss reload &7- 設定を再読み込み"
 help-help: "&8» &b/xss help &7- このヘルプを表示"
 help-locate: "&8» &b/xss locate &7- 利用可能な言語を表示"

@@ -33,11 +33,6 @@ commands:
     usage: /back
     aliases: []
 
-  hub:
-    description: Teleport to the lobby/hub spawn point.
-    usage: /hub
-    aliases: [lobby]
-
 permissions:
   xsetspawn.spawn:
     description: Allows using /spawn to teleport to spawn.
@@ -86,7 +81,3 @@ permissions:
   xsetspawn.spawn-on-join:
     description: Allows teleporting to spawn on join.
     default: false
-
-  xsetspawn.hub:
-    description: Allows using /hub and /lobby to teleport to the lobby.
-    default: true

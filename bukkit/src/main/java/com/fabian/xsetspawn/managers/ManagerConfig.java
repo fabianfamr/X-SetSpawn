@@ -27,7 +27,6 @@ public class ManagerConfig {
     public int delayTime;
     public int delaySpawn; // per-command delay for /spawn (-1 = use global)
     public int delayBack;  // per-command delay for /back  (-1 = use global)
-    public int delayHub;   // per-command delay for /hub   (-1 = use global)
     public boolean delayCancelOnMove;
     public boolean combatCheckEnabled;
     public boolean fallingCheckEnabled;
@@ -105,13 +104,6 @@ public class ManagerConfig {
     public boolean backEnabled;
     public int backExpires; // in minutes, 0 = never
 
-    // 12. Hub Command
-    public boolean hubEnabled;
-    public boolean hubProxyEnabled; // use proxy to connect to lobby server
-    public String hubProxyServer;  // override target server for /hub (null = use proxy-server)
-    public String particleHubType;
-    public int particleHubAmount;
-
     public ManagerConfig(XSetSpawn plugin) {
         this.plugin = plugin;
         load();
@@ -135,7 +127,6 @@ public class ManagerConfig {
         this.delayTime = config.getInt("delay.time", 3);
         this.delaySpawn = config.getInt("delay.spawn", -1);
         this.delayBack = config.getInt("delay.back", -1);
-        this.delayHub = config.getInt("delay.hub", -1);
         this.delayCancelOnMove = config.getBoolean("delay.cancel-on-move", true);
         this.combatCheckEnabled = config.getBoolean("combat-check.enabled", false);
         this.fallingCheckEnabled = config.getBoolean("falling-check.enabled", true);
@@ -156,8 +147,6 @@ public class ManagerConfig {
         this.particleBackAmount = config.getInt("particles.back.amount", 15);
         this.particleDeathType = config.getString("particles.death.type", "FLAME");
         this.particleDeathAmount = config.getInt("particles.death.amount", 10);
-        this.particleHubType = config.getString("particles.hub.type", "NAUTILUS");
-        this.particleHubAmount = config.getInt("particles.hub.amount", 25);
         this.soundsEnabled = config.getBoolean("sounds.enabled", true);
         this.spawnSound = config.getString("sounds.spawn-sound", "ENTITY_ENDERMAN_TELEPORT");
         this.soundVolume = (float) config.getDouble("sounds.volume", 1.0);
@@ -214,11 +203,6 @@ public class ManagerConfig {
         // Back Command
         this.backEnabled = config.getBoolean("back.enabled", true);
         this.backExpires = config.getInt("back.expires", 60);
-
-        // Hub Command
-        this.hubEnabled = config.getBoolean("hub.enabled", true);
-        this.hubProxyEnabled = config.getBoolean("hub.use-proxy", false);
-        this.hubProxyServer = config.getString("hub.proxy-server", null);
     }
 
     public void reload() {
@@ -236,8 +220,6 @@ public class ManagerConfig {
                 return delaySpawn < 0 ? delayTime : delaySpawn;
             case "back":
                 return delayBack < 0 ? delayTime : delayBack;
-            case "hub":
-                return delayHub < 0 ? delayTime : delayHub;
             default:
                 return delayTime;
         }

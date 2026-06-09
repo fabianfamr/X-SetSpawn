@@ -150,23 +150,4 @@ public class PluginMessageManager implements PluginMessageListener {
             // Silently fail as the channel might not be registered yet on very early join
         }
     }
-
-    /**
-     * Sends a player to a specific server via BungeeCord/Velocity plugin messaging.
-     * Uses the standard BungeeCord "ConnectOther" sub-channel.
-     *
-     * @param player      The player to connect.
-     * @param serverName  The target server name as defined in proxy config.
-     */
-    public void sendToServer(Player player, String serverName) {
-        if (player == null || serverName == null || serverName.isEmpty()) return;
-        try {
-            ByteArrayDataOutput out = ByteStreams.newDataOutput();
-            out.writeUTF("Connect");
-            out.writeUTF(serverName);
-            player.sendPluginMessage(plugin, CHANNEL, out.toByteArray());
-        } catch (Exception e) {
-            plugin.logError("Failed to send Connect message to proxy (server: " + serverName + "): " + e.getMessage());
-        }
-    }
 }
