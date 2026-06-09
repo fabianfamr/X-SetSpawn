@@ -3,6 +3,7 @@ package com.fabian.xsetspawn;
 import com.fabian.xsetspawn.commands.AdminCommand;
 import com.fabian.xsetspawn.commands.BackCommand;
 import com.fabian.xsetspawn.commands.DelSpawnCommand;
+import com.fabian.xsetspawn.commands.HubCommand;
 import com.fabian.xsetspawn.commands.SetSpawnCommand;
 import com.fabian.xsetspawn.commands.SpawnCommand;
 import com.fabian.xsetspawn.listeners.CommandListener;
@@ -122,6 +123,30 @@ public class XSetSpawn extends JavaPlugin implements Listener {
             } catch (Exception ignored) {
                 // Fallback: set a no-op executor so it at least doesn't say "no permission"
                 getCommand("back").setExecutor((sender, command, label, args) -> {
+                    sender.sendMessage(getLanguageManager().getMessage("command-disabled"));
+                    return true;
+                });
+            }
+        }
+
+        // Register /hub command (alias /lobby is defined in plugin.yml)
+        if (managerConfig.hubEnabled) {
+            HubCommand hubCommand = new HubCommand(this);
+            getCommand("hub").setExecutor(hubCommand);
+            getCommand("hub").setTabCompleter(hubCommand);
+        } else {
+            try {
+                org.bukkit.command.CommandMap commandMap = getServer().getCommandMap();
+                org.bukkit.command.KnownCommand known = commandMap.getCommand("hub");
+                if (known != null) {
+                    known.unregister(commandMap);
+                    commandMap.getKnownCommands().remove("hub");
+                    commandMap.getKnownCommands().remove("lobby");
+                    commandMap.getKnownCommands().remove("xsetspawn:hub");
+                    commandMap.getKnownCommands().remove("xsetspawn:lobby");
+                }
+            } catch (Exception ignored) {
+                getCommand("hub").setExecutor((sender, command, label, args) -> {
                     sender.sendMessage(getLanguageManager().getMessage("command-disabled"));
                     return true;
                 });

@@ -130,6 +130,7 @@ delay:
   time: 3        # Global default
   spawn: 3       # Delay for /spawn (-1 uses global)
   back: 0        # Delay for /back (-1 uses global, 0 = instant)
+  hub: 0         # Delay for /hub  (-1 uses global, 0 = instant)
 
 # Block /spawn if the player is currently in combat?
 # Supports: CombatLogX, PvPManager, DeluxeCombat (detected automatically at runtime)
@@ -161,6 +162,21 @@ back:
   enabled: true
   # How many minutes before the saved location expires (0 = never expires).
   expires: 60
+
+# ============================================
+#            Hub / Lobby Command
+# ============================================
+# /hub and /lobby teleport the player to the lobby.
+# If proxy-support is enabled and hub.use-proxy is true,
+# /hub sends the player to the lobby server via Bungee/Velocity.
+# Otherwise, it teleports locally to the named spawn "lobby" or "hub",
+# or falls back to the world spawn.
+hub:
+  enabled: true
+  # Send to another server via proxy? (requires proxy-support.enabled: true)
+  use-proxy: false
+  # Override the target server for /hub (leave empty to use proxy-support.server)
+  proxy-server: ""
 
 # ============================================
 #         Protections & Safety
@@ -206,6 +222,10 @@ particles:
   death:
     type: "FLAME"
     amount: 10
+  # Particle burst when using /hub or /lobby
+  hub:
+    type: "NAUTILUS"
+    amount: 25
 
 # Sound played when the player arrives at spawn.
 # Sound names: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html

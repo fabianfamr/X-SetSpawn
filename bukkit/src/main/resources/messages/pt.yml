@@ -21,12 +21,17 @@ delspawn-usage: "&cUso: /xss delspawn <nome>"
 back-teleport: "&aTeleportado de volta à sua localização anterior."
 back-no-location: "&cVocê não tem nenhuma localização salva (ou ela expirou)."
 
+# Comando /hub /lobby
+hub-teleport: "&aTeleportado ao &eLobby&a."
+hub-not-set: "&cO spawn do Lobby não foi definido. Use &e/setspawn lobby &cpara definir."
+
 # Ajuda
 help-header: "&8&m      &b [ &3Ajuda do X-SetSpawn &b] &8&m      "
 help-spawn: "&8» &b/spawn &7- Teleportar para o spawn"
 help-setspawn: "&8» &b/setspawn &7- Definir spawn global"
 help-delspawn: "&8» &b/delspawn &7- Remover um spawn"
 help-back: "&8» &b/back &7- Voltar ao local anterior"
+help-hub: "&8» &b/hub &7- Ir ao lobby"
 help-reload: "&8» &b/xss reload &7- Recarregar configuração"
 help-help: "&8» &b/xss help &7- Mostrar este menu de ajuda"
 help-locate: "&8» &b/xss locate &7- Ver idiomas disponíveis"

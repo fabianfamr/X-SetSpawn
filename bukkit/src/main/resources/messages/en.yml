@@ -24,6 +24,10 @@ delspawn-usage: "&cUsage: /xss delspawn <name>"
 back-teleport: "&aTeleported back to your previous location."
 back-no-location: "&cYou have no previous location saved (or it has expired)."
 
+# /hub /lobby Command
+hub-teleport: "&aTeleported to the &eLobby&a."
+hub-not-set: "&cLobby spawn has not been set. Use &e/setspawn lobby &cto set it."
+
 # /xss import
 import-usage: "&7Usage: &f/xss import <source> [--force]"
 import-available: "&7Available sources: &f{0}"
@@ -45,6 +49,7 @@ help-spawn: "&8» &b/spawn &7- Teleport to spawn"
 help-setspawn: "&8» &b/setspawn &7- Set global spawn"
 help-delspawn: "&8» &b/delspawn &7- Delete a specific spawn"
 help-back: "&8» &b/back &7- Return to your last location"
+help-hub: "&8» &b/hub &7- Go to the lobby"
 help-reload: "&8» &b/xss reload &7- Reload configuration"
 help-help: "&8» &b/xss help &7- Show this help menu"
 help-locate: "&8» &b/xss locate &7- View available languages"

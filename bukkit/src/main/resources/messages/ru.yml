@@ -21,6 +21,10 @@ delspawn-usage: "&cИспользование: /xss delspawn <название>"
 back-teleport: "&aВы вернулись на предыдущее место."
 back-no-location: "&cУ вас нет сохранённого места (или срок действия истёк)."
 
+# Команда /hub /lobby
+hub-teleport: "&aВы телепортированы в &eЛобби&a."
+hub-not-set: "&cСпавн лобби не установлен. Используйте &e/setspawn lobby&c."
+
 
 # Помощь
 help-header: "&8&m      &b [ &3Помощь по X-SetSpawn &b] &8&m      "
@@ -28,6 +32,7 @@ help-spawn: "&8» &b/spawn &7- Телепортация на спавн"
 help-setspawn: "&8» &b/setspawn &7- Установить глобальный спавн"
 help-delspawn: "&8» &b/delspawn &7- Удалить спавн"
 help-back: "&8» &b/back &7- Вернуться на предыдущее место"
+help-hub: "&8» &b/hub &7- Перейти в лобби"
 help-reload: "&8» &b/xss reload &7- Перезагрузить конфигурацию"
 help-help: "&8» &b/xss help &7- Показать это меню"
 help-locate: "&8» &b/xss locate &7- Просмотр доступных языков"
