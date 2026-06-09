@@ -24,6 +24,19 @@ delspawn-usage: "&cUsage: /xss delspawn <name>"
 back-teleport: "&aTeleported back to your previous location."
 back-no-location: "&cYou have no previous location saved (or it has expired)."
 
+# /xss import
+import-usage: "&7Usage: &f/xss import <source> [--force]"
+import-available: "&7Available sources: &f{0}"
+import-source-unknown: "&cUnknown source: &e{0}&c. Use /xss import to see available sources."
+import-file-not-found: "&cCould not find {0} data file at: {1}"
+import-parse-error: "&cFailed to parse {0} spawn data. Check the file format."
+import-error: "&cError importing from {0}: {1}"
+import-no-spawns: "&cNo spawns found in {0} data."
+import-success: "&aSuccessfully imported &e{0} &aspawn(s) from &e{1}&a!"
+import-reloaded: "&aSpawn cache reloaded."
+import-already-done: "&e{0} &ehas already been imported before."
+import-force-hint: "&7Add &f--force &7to import again."
+
 # ============================================
 #                  Ayuda
 # ============================================
@@ -44,6 +57,7 @@ help-footer: "&8&m                                     "
 #               Errors & Warnings
 # ============================================
 no-permission: "&cYou don't have permission to use this command."
+command-disabled: "&cThis command is disabled by the server administrator."
 spawn-not-set: "&cSpawn has not been set yet."
 spawn-not-set-world: "&cSpawn for world &e{0}&c has not been set."
 player-only: "&cThis command can only be used by players."

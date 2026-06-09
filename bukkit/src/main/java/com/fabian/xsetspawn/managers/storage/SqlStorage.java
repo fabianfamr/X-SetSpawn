@@ -21,6 +21,8 @@ public class SqlStorage implements SpawnStorage {
     private final XSetSpawn plugin;
     private HikariDataSource dataSource;
     private final String tableName = "xsetspawn_spawns";
+    private volatile boolean ready = false;
+    private final java.util.concurrent.CountDownLatch readyLatch = new java.util.concurrent.CountDownLatch(1);
     /** true = H2 embedded, false = MySQL/MariaDB */
     private boolean isH2;
 
@@ -30,10 +32,18 @@ public class SqlStorage implements SpawnStorage {
         com.fabian.xsetspawn.utils.SchedulerUtil.runAsync(plugin, () -> {
             setupDataSource(type, host, port, database, username, password);
             createTable();
+            ready = true;
+            readyLatch.countDown();
             if (plugin.getSpawnManager() != null) {
                 plugin.getSpawnManager().loadCachesAsync();
             }
         });
+    }
+
+    public boolean isReady() { return ready; }
+
+    public void awaitReady() {
+        try { readyLatch.await(5, java.util.concurrent.TimeUnit.SECONDS); } catch (InterruptedException ignored) {}
     }
 
     private static boolean logsSilenced = false;
@@ -115,7 +125,7 @@ public class SqlStorage implements SpawnStorage {
     @Override
     public CompletableFuture<Void> save(String id, Location location) {
         return CompletableFuture.supplyAsync(() -> {
-            if (dataSource == null) return null;
+            if (!ready || dataSource == null) return null;
             try (Connection conn = dataSource.getConnection()) {
                 if (isH2) {
                     // H2 uses MERGE INTO ... KEY (id) syntax for upsert
@@ -163,7 +173,7 @@ public class SqlStorage implements SpawnStorage {
     @Override
     public CompletableFuture<Location> load(String id) {
         return CompletableFuture.supplyAsync(() -> {
-            if (dataSource == null) return null;
+            if (!ready || dataSource == null) return null;
             String sql = "SELECT * FROM " + tableName + " WHERE id = ?;";
 
             try (Connection conn = dataSource.getConnection();
@@ -194,7 +204,7 @@ public class SqlStorage implements SpawnStorage {
     @Override
     public CompletableFuture<Boolean> isSet(String id) {
         return CompletableFuture.supplyAsync(() -> {
-            if (dataSource == null) return false;
+            if (!ready || dataSource == null) return false;
             String sql = "SELECT 1 FROM " + tableName + " WHERE id = ?;";
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -211,7 +221,7 @@ public class SqlStorage implements SpawnStorage {
     @Override
     public CompletableFuture<Void> remove(String id) {
         return CompletableFuture.supplyAsync(() -> {
-            if (dataSource == null) return null;
+            if (!ready || dataSource == null) return null;
             String sql = "DELETE FROM " + tableName + " WHERE id = ?;";
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -228,7 +238,7 @@ public class SqlStorage implements SpawnStorage {
     public CompletableFuture<java.util.List<String>> getAllSpawnIds() {
         return CompletableFuture.supplyAsync(() -> {
             java.util.List<String> ids = new java.util.ArrayList<>();
-            if (dataSource == null) return ids;
+            if (!ready || dataSource == null) return ids;
             String sql = "SELECT id FROM " + tableName + ";";
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement pstmt = conn.prepareStatement(sql);
@@ -247,7 +257,7 @@ public class SqlStorage implements SpawnStorage {
     public CompletableFuture<java.util.Map<String, Location>> loadAll() {
         return CompletableFuture.supplyAsync(() -> {
             java.util.Map<String, Location> map = new java.util.HashMap<>();
-            if (dataSource == null) return map;
+            if (!ready || dataSource == null) return map;
             String sql = "SELECT * FROM " + tableName + ";";
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement pstmt = conn.prepareStatement(sql);

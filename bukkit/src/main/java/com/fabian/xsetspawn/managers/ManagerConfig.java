@@ -25,6 +25,8 @@ public class ManagerConfig {
     public int cooldownTime;
     public boolean delayEnabled;
     public int delayTime;
+    public int delaySpawn; // per-command delay for /spawn (-1 = use global)
+    public int delayBack;  // per-command delay for /back  (-1 = use global)
     public boolean delayCancelOnMove;
     public boolean combatCheckEnabled;
     public boolean fallingCheckEnabled;
@@ -33,10 +35,18 @@ public class ManagerConfig {
     public boolean economyEnabled;
     public double economyCost;
 
-    // 5. Visual Effects (Particles, Sounds, Titles)
+    // 5. Visual Effects (Particles per-event, Sounds, Titles)
     public boolean particlesEnabled;
     public String particleType;
     public int particleAmount;
+    public String particleCountdownType;
+    public int particleCountdownAmount;
+    public String particleSpawnType;
+    public int particleSpawnAmount;
+    public String particleBackType;
+    public int particleBackAmount;
+    public String particleDeathType;
+    public int particleDeathAmount;
     public boolean soundsEnabled;
     public String spawnSound;
     public float soundVolume;
@@ -115,6 +125,8 @@ public class ManagerConfig {
         this.cooldownTime = config.getInt("cooldown.time", 10);
         this.delayEnabled = config.getBoolean("delay.enabled", true);
         this.delayTime = config.getInt("delay.time", 3);
+        this.delaySpawn = config.getInt("delay.spawn", -1);
+        this.delayBack = config.getInt("delay.back", -1);
         this.delayCancelOnMove = config.getBoolean("delay.cancel-on-move", true);
         this.combatCheckEnabled = config.getBoolean("combat-check.enabled", false);
         this.fallingCheckEnabled = config.getBoolean("falling-check.enabled", true);
@@ -123,10 +135,18 @@ public class ManagerConfig {
         this.economyEnabled = config.getBoolean("economy.enabled", false);
         this.economyCost = config.getDouble("economy.cost", 50.0);
 
-        // Visual Effects
+        // Visual Effects — particles per event
         this.particlesEnabled = config.getBoolean("particles.enabled", true);
-        this.particleType = config.getString("particles.type", "VILLAGER_HAPPY");
-        this.particleAmount = config.getInt("particles.amount", 5);
+        this.particleType = config.getString("particles.countdown.type", "VILLAGER_HAPPY");
+        this.particleAmount = config.getInt("particles.countdown.amount", 5);
+        this.particleCountdownType = config.getString("particles.countdown.type", "VILLAGER_HAPPY");
+        this.particleCountdownAmount = config.getInt("particles.countdown.amount", 5);
+        this.particleSpawnType = config.getString("particles.spawn.type", "PORTAL");
+        this.particleSpawnAmount = config.getInt("particles.spawn.amount", 20);
+        this.particleBackType = config.getString("particles.back.type", "EXPLOSION_LARGE");
+        this.particleBackAmount = config.getInt("particles.back.amount", 15);
+        this.particleDeathType = config.getString("particles.death.type", "FLAME");
+        this.particleDeathAmount = config.getInt("particles.death.amount", 10);
         this.soundsEnabled = config.getBoolean("sounds.enabled", true);
         this.spawnSound = config.getString("sounds.spawn-sound", "ENTITY_ENDERMAN_TELEPORT");
         this.soundVolume = (float) config.getDouble("sounds.volume", 1.0);
@@ -187,6 +207,22 @@ public class ManagerConfig {
 
     public void reload() {
         load();
+    }
+
+    /**
+     * Resolves the effective delay time for a specific command.
+     * If the per-command delay is -1, falls back to the global delay time.
+     * If the per-command delay is 0, returns 0 (instant).
+     */
+    public int getDelayForCommand(String command) {
+        switch (command.toLowerCase()) {
+            case "spawn":
+                return delaySpawn < 0 ? delayTime : delaySpawn;
+            case "back":
+                return delayBack < 0 ? delayTime : delayBack;
+            default:
+                return delayTime;
+        }
     }
 }
 

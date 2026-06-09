@@ -44,6 +44,7 @@ help-footer: "&8&m                                     "
 #               Errors & Warnings
 # ============================================
 no-permission: "&cYou don't have permission to use this command."
+command-disabled: "&cThis command is disabled by the server administrator."
 spawn-not-set: "&cSpawn has not been set yet."
 spawn-not-set-world: "&cSpawn for world &e{0}&c has not been set."
 player-only: "&cThis command can only be used by players."

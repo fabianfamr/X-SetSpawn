@@ -64,9 +64,9 @@ public class XSetSpawnBungee extends Plugin implements Listener {
     private String msgLobbySet = "§aGlobal lobby server has been set to: §e{server}";
 
     // Cooldowns and pending tasks
-    private final Map<UUID, Long> cooldowns = new HashMap<>();
-    private final Map<UUID, ScheduledTask> pendingTeleports = new HashMap<>();
-    private final Map<UUID, Long> lastGlobalTeleport = new HashMap<>();
+    private final Map<UUID, Long> cooldowns = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<UUID, ScheduledTask> pendingTeleports = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<UUID, Long> lastGlobalTeleport = new java.util.concurrent.ConcurrentHashMap<>();
 
     // Metrics
     private Metrics metrics;
@@ -90,7 +90,7 @@ public class XSetSpawnBungee extends Plugin implements Listener {
         }
 
         getLogger().info(translateColors("&b----------------------------------------------"));
-        getLogger().info(translateColors("  &3X-SetSpawn &bv2.1 &aenabled! Enjoy spawning!"));
+        getLogger().info(translateColors("  &3X-SetSpawn &bv" + getDescription().getVersion() + " &aenabled! Enjoy spawning!"));
         getLogger().info(translateColors("  &fLanguage: &e" + language + " &f| Lobby: &e" + targetServer));
         getLogger().info(translateColors("  &fCommands: &e" + aliases + " &fand &b/setlobby"));
         getLogger().info(translateColors("&b----------------------------------------------"));
@@ -111,7 +111,7 @@ public class XSetSpawnBungee extends Plugin implements Listener {
         if (metrics != null) {
             metrics.shutdown();
         }
-        getLogger().info("X-SetSpawn v2.1 disabled!");
+        getLogger().info("X-SetSpawn v" + getDescription().getVersion() + " disabled!");
     }
 
     @EventHandler

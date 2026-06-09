@@ -115,19 +115,21 @@ events:
 #           Teleport Mechanics
 # ============================================
 
-# Cooldown between uses of /spawn (in seconds).
+# Cooldown between uses of /spawn and /back (in seconds).
 # Players with xsetspawn.bypass.cooldown skip this.
 cooldown:
   enabled: true
   time: 10
 
-# Delay before the teleport executes (countdown in seconds).
+# Delay (countdown) before teleporting. Configurable per-command.
 # Players with xsetspawn.bypass.delay skip this.
 delay:
   enabled: true
-  time: 3
-  # Cancel the teleport if the player moves during the countdown?
   cancel-on-move: true
+  # Separate countdown times per command (in seconds). -1 = use global time.
+  time: 3        # Global default
+  spawn: 3       # Delay for /spawn (-1 uses global)
+  back: 0        # Delay for /back (-1 uses global, 0 = instant)
 
 # Block /spawn if the player is currently in combat?
 # Supports: CombatLogX, PvPManager, DeluxeCombat (detected automatically at runtime)
@@ -152,7 +154,9 @@ economy:
 # ============================================
 #           Back Command
 # ============================================
-# Allow players to return to their previous location after using /spawn.
+# Allow players to return to their previous location.
+# The location is saved when using /spawn or when dying and respawning at spawn.
+# When disabled, the /back command is unregistered and will not appear in tab-complete.
 back:
   enabled: true
   # How many minutes before the saved location expires (0 = never expires).
@@ -182,12 +186,26 @@ first-join-spawn:
 #           Visual Effects
 # ============================================
 
-# Spawn particles around the player during the teleport countdown.
+# Particles — configure different particles per event.
 # Particle type names: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Particle.html
 particles:
   enabled: true
-  type: "VILLAGER_HAPPY"
-  amount: 5
+  # Particle during the teleport countdown (spiral around the player)
+  countdown:
+    type: "VILLAGER_HAPPY"
+    amount: 5
+  # Particle burst when arriving at spawn
+  spawn:
+    type: "PORTAL"
+    amount: 20
+  # Particle burst when using /back
+  back:
+    type: "EXPLOSION_LARGE"
+    amount: 15
+  # Particle burst when respawning at spawn after death
+  death:
+    type: "FLAME"
+    amount: 10
 
 # Sound played when the player arrives at spawn.
 # Sound names: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html

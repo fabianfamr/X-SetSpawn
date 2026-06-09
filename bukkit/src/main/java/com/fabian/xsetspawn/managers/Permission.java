@@ -53,13 +53,14 @@ public enum Permission {
         }
 
         Player player = (Player) sender;
+        boolean result = player.hasPermission(this.node);
 
         // If permission is explicitly set to FALSE (negated), deny — even for OP
-        if (player.isPermissionSet(this.node) && !player.hasPermission(this.node)) {
+        if (player.isPermissionSet(this.node) && !result) {
             return false;
         }
 
-        return player.hasPermission(this.node);
+        return result;
     }
 }
 

@@ -126,12 +126,16 @@ public class SpawnCommand implements CommandExecutor, TabCompleter {
         }
 
         DelayManager delayManager = plugin.getDelayManager();
-        if (config.delayEnabled && !Permission.BYPASS_DELAY.has(player)) {
-            plugin.getBackManager().saveLocation(player); // save before delay
-            delayManager.scheduleTeleport(player, spawnLocation, config.delayTime, successMessage);
+        int effectiveDelay = config.getDelayForCommand("spawn");
+        if (config.delayEnabled && !Permission.BYPASS_DELAY.has(player) && effectiveDelay > 0) {
+            // Save back-location at the START of the delay (so the player can go back
+            // if the delay completes and they get teleported).  If the delay is
+            // cancelled (movement), the back-location is cleared by DelayManager.
+            plugin.getBackManager().saveLocation(player);
+            delayManager.scheduleTeleport(player, spawnLocation, effectiveDelay, successMessage);
         } else {
-            // Instant Teleport
-            plugin.getBackManager().saveLocation(player); // save before instant
+            // Instant Teleport — save location right before teleporting
+            plugin.getBackManager().saveLocation(player);
             
             final Location finalLocation = spawnLocation;
             final String finalMessage = successMessage;

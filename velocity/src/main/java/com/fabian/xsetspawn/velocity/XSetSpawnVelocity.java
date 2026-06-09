@@ -84,9 +84,9 @@ public class XSetSpawnVelocity {
     private String msgLobbySet = "§aGlobal lobby server has been set to: §e{server}";
 
     // Cooldowns and pending tasks
-    private final Map<UUID, Long> cooldowns = new HashMap<>();
-    private final Map<UUID, ScheduledTask> pendingTeleports = new HashMap<>();
-    private final Map<UUID, Long> lastGlobalTeleport = new HashMap<>();
+    private final Map<UUID, Long> cooldowns = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<UUID, ScheduledTask> pendingTeleports = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<UUID, Long> lastGlobalTeleport = new java.util.concurrent.ConcurrentHashMap<>();
 
     @Inject
     public XSetSpawnVelocity(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory, Metrics.Factory metricsFactory) {
@@ -122,7 +122,7 @@ public class XSetSpawnVelocity {
         }
 
         server.getConsoleCommandSource().sendMessage(LEGACY.deserialize("&b----------------------------------------------"));
-        server.getConsoleCommandSource().sendMessage(LEGACY.deserialize("  &3X-SetSpawn &bv2.1 &aenabled! Enjoy spawning!"));
+        server.getConsoleCommandSource().sendMessage(LEGACY.deserialize("  &3X-SetSpawn &bv2.2 &aenabled! Enjoy spawning!"));
         server.getConsoleCommandSource().sendMessage(LEGACY.deserialize("  &fLanguage: &e" + language + " &f| Lobby: &e" + targetServer));
         server.getConsoleCommandSource().sendMessage(LEGACY.deserialize("  &fCommands: &e" + aliases + " &fand &b/setlobby"));
         server.getConsoleCommandSource().sendMessage(LEGACY.deserialize("&b----------------------------------------------"));

@@ -30,7 +30,12 @@ public class SpawnManager {
         // loadCaches() is now called asynchronously by the storage backends once connected.
     }
 
+    /**
+     * @deprecated Use {@link #loadCachesAsync()} instead. This method blocks the calling thread.
+     */
+    @Deprecated
     public void loadCaches() {
+        plugin.log("&eWarning: loadCaches() called on main thread. Use loadCachesAsync().");
         spawnCache.clear();
         java.util.Map<String, Location> allSpawns = storage.loadAll().join();
         if (allSpawns != null) {
@@ -170,7 +175,7 @@ public class SpawnManager {
 
         // Fireworks
         if (config.fireworksEnabled) {
-            VisualUtil.spawnFirework(location.clone().add(0, 1, 0), cachedFireworkColor, config.fireworksPower);
+            VisualUtil.spawnFirework(plugin, location.clone().add(0, 1, 0), cachedFireworkColor, config.fireworksPower);
         }
     }
 

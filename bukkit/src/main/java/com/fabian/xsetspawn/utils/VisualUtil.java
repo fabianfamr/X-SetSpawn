@@ -73,7 +73,7 @@ public class VisualUtil {
             if (title != null) {
                 Object enumTitle = getNMSClass("PacketPlayOutTitle$EnumTitleAction").getField("TITLE").get(null);
                 Object titleChat = getNMSClass("IChatBaseComponent$ChatSerializer").getMethod("a", String.class)
-                        .invoke(null, "{\"text\":\"" + title.replace("&", "§") + "\"}");
+                        .invoke(null, "{\"text\":\"" + escapeJson(title.replace("&", "§")) + "\"}");
                 Object titlePacket = getNMSClass("PacketPlayOutTitle").getConstructor(enumTitle.getClass(), getNMSClass("IChatBaseComponent"))
                         .newInstance(enumTitle, titleChat);
                 sendPacket(player, titlePacket);
@@ -83,7 +83,7 @@ public class VisualUtil {
             if (subtitle != null) {
                 Object enumSubtitle = getNMSClass("PacketPlayOutTitle$EnumTitleAction").getField("SUBTITLE").get(null);
                 Object subtitleChat = getNMSClass("IChatBaseComponent$ChatSerializer").getMethod("a", String.class)
-                        .invoke(null, "{\"text\":\"" + subtitle.replace("&", "§") + "\"}");
+                        .invoke(null, "{\"text\":\"" + escapeJson(subtitle.replace("&", "§")) + "\"}");
                 Object subtitlePacket = getNMSClass("PacketPlayOutTitle").getConstructor(enumSubtitle.getClass(), getNMSClass("IChatBaseComponent"))
                         .newInstance(enumSubtitle, subtitleChat);
                 sendPacket(player, subtitlePacket);
@@ -99,6 +99,27 @@ public class VisualUtil {
         return Class.forName("net.minecraft.server." + version + "." + name);
     }
 
+    private static String escapeJson(String input) {
+        if (input == null) return "";
+        StringBuilder sb = new StringBuilder(input.length());
+        for (char c : input.toCharArray()) {
+            switch (c) {
+                case '"': sb.append("\\\""); break;
+                case '\\': sb.append("\\\\"); break;
+                case '\n': sb.append("\\n"); break;
+                case '\r': sb.append("\\r"); break;
+                case '\t': sb.append("\\t"); break;
+                default:
+                    if (c < 0x20) {
+                        sb.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        sb.append(c);
+                    }
+            }
+        }
+        return sb.toString();
+    }
+
     private static void sendPacket(Player player, Object packet) {
         try {
             Object handle = player.getClass().getMethod("getHandle").invoke(player);
@@ -107,7 +128,7 @@ public class VisualUtil {
         } catch (Exception ignored) { }
     }
 
-    public static void spawnFirework(Location location, Color color, int power) {
+    public static void spawnFirework(org.bukkit.plugin.Plugin plugin, Location location, Color color, int power) {
         if (location.getWorld() == null) return;
         
         Firework fw = location.getWorld().spawn(location, Firework.class);
@@ -120,6 +141,11 @@ public class VisualUtil {
                 .build());
         fwm.setPower(power);
         fw.setFireworkMeta(fwm);
+        
+        // Schedule cleanup to prevent orphan firework entities
+        org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (fw.isValid()) fw.remove();
+        }, (long)(power + 2) * 20L);
     }
 }
 

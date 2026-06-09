@@ -39,8 +39,7 @@ public class CombatHook {
         } else if (isPluginEnabled("DeluxeCombat")) {
             detectedPlugin = CombatPlugin.METADATA_ONLY;
         } else {
-            // Check for any generic combat plugin via common metadata
-            detectedPlugin = CombatPlugin.METADATA_ONLY;
+            detectedPlugin = CombatPlugin.NONE;
         }
         return detectedPlugin;
     }
@@ -68,6 +67,8 @@ public class CombatHook {
         switch (plugin) {
             case COMBATLOGX: return checkCombatLogX(player);
             case PVPMANAGER: return checkPvPManager(player);
+            case METADATA_ONLY:
+            case NONE:
             default: return false;
         }
     }

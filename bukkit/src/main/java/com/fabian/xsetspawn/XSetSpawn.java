@@ -78,6 +78,7 @@ public class XSetSpawn extends JavaPlugin implements Listener {
             this.delayManager = new DelayManager(this);
             this.vaultHook = new VaultHook(this);
             this.backManager = new BackManager(this);
+            this.backManager.startCleanupTask();
             this.pluginMessageManager = new PluginMessageManager(this);
         } catch (Exception e) {
             logError("Could not initialize handlers: " + e.getMessage());
@@ -90,7 +91,6 @@ public class XSetSpawn extends JavaPlugin implements Listener {
         SetSpawnCommand setSpawnCommand = new SetSpawnCommand(this);
         SpawnCommand spawnCommand = new SpawnCommand(this);
         AdminCommand adminCommand = new AdminCommand(this);
-        BackCommand backCommand = new BackCommand(this);
         DelSpawnCommand delSpawnCommand = new DelSpawnCommand(this);
 
         getCommand("setspawn").setExecutor(setSpawnCommand);
@@ -99,9 +99,34 @@ public class XSetSpawn extends JavaPlugin implements Listener {
         getCommand("spawn").setTabCompleter(spawnCommand);
         getCommand("xsetspawn").setExecutor(adminCommand);
         getCommand("xsetspawn").setTabCompleter(adminCommand);
-        getCommand("back").setExecutor(backCommand);
         getCommand("delspawn").setExecutor(delSpawnCommand);
         getCommand("delspawn").setTabCompleter(delSpawnCommand);
+
+        // Only register /back when enabled — when disabled the command is
+        // completely unknown to the server (no tab-complete, no "unknown command"
+        // confusion, and no fake "no permission" message).
+        if (managerConfig.backEnabled) {
+            BackCommand backCommand = new BackCommand(this);
+            getCommand("back").setExecutor(backCommand);
+        } else {
+            // Unregister the command so it doesn't show up at all
+            try {
+                org.bukkit.command.CommandMap commandMap = getServer().getCommandMap();
+                org.bukkit.command.KnownCommand known = commandMap.getCommand("back");
+                if (known != null) {
+                    known.unregister(commandMap);
+                    commandMap.getKnownCommands().remove("back");
+                    // Also remove aliases
+                    commandMap.getKnownCommands().remove("xsetspawn:back");
+                }
+            } catch (Exception ignored) {
+                // Fallback: set a no-op executor so it at least doesn't say "no permission"
+                getCommand("back").setExecutor((sender, command, label, args) -> {
+                    sender.sendMessage(getLanguageManager().getMessage("command-disabled"));
+                    return true;
+                });
+            }
+        }
 
         // Register dynamic aliases from config.yml
         new AliasManager(this).registerAliases();

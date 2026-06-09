@@ -40,9 +40,10 @@ public class UpdateChecker {
                 connection.setConnectTimeout(5000);
                 connection.setReadTimeout(5000);
 
-                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                String version = reader.readLine();
-                reader.close();
+                String version;
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                    version = reader.readLine();
+                }
 
                 this.latestVersion = version;
                 LanguageManager lang = plugin.getLanguageManager();

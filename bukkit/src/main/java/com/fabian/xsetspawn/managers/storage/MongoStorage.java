@@ -27,6 +27,7 @@ public class MongoStorage implements SpawnStorage {
     private MongoDatabase database;
     private MongoCollection<Document> collection;
     private final XSetSpawn plugin;
+    private volatile boolean ready = false;
 
     private static boolean logsSilenced = false;
 
@@ -74,6 +75,7 @@ public class MongoStorage implements SpawnStorage {
                 this.database.runCommand(new Document("ping", 1));
                 
                 plugin.log("&aMONGODB database connected and ready.");
+                ready = true;
 
                 // Trigger cache load once connected
                 if (plugin.getSpawnManager() != null) {
@@ -91,7 +93,7 @@ public class MongoStorage implements SpawnStorage {
     @Override
     public CompletableFuture<Void> save(String id, Location location) {
         return CompletableFuture.supplyAsync(() -> {
-            if (collection == null) return null;
+            if (!ready || collection == null) return null;
             try {
                 Document doc = new Document("_id", id)
                         .append("world", location.getWorld().getName())
@@ -112,7 +114,7 @@ public class MongoStorage implements SpawnStorage {
     @Override
     public CompletableFuture<Location> load(String id) {
         return CompletableFuture.supplyAsync(() -> {
-            if (collection == null) return null;
+            if (!ready || collection == null) return null;
             try {
                 Document doc = collection.find(eq("_id", id)).first();
                 if (doc == null) return null;
@@ -137,7 +139,7 @@ public class MongoStorage implements SpawnStorage {
     @Override
     public CompletableFuture<Boolean> isSet(String id) {
         return CompletableFuture.supplyAsync(() -> {
-            if (collection == null) return false;
+            if (!ready || collection == null) return false;
             try {
                 return collection.find(eq("_id", id)).first() != null;
             } catch (Exception e) {
@@ -149,10 +151,12 @@ public class MongoStorage implements SpawnStorage {
     @Override
     public CompletableFuture<Void> remove(String id) {
         return CompletableFuture.supplyAsync(() -> {
-            if (collection == null) return null;
+            if (!ready || collection == null) return null;
             try {
                 collection.deleteOne(eq("_id", id));
-            } catch (Exception e) {}
+            } catch (Exception e) {
+                plugin.logError("Error removing from MongoDB: " + e.getMessage());
+            }
             return null;
         });
     }
@@ -161,7 +165,7 @@ public class MongoStorage implements SpawnStorage {
     public CompletableFuture<List<String>> getAllSpawnIds() {
         return CompletableFuture.supplyAsync(() -> {
             List<String> ids = new ArrayList<>();
-            if (collection == null) return ids;
+            if (!ready || collection == null) return ids;
             try (MongoCursor<Document> cursor = collection.find().iterator()) {
                 while (cursor.hasNext()) {
                     Document doc = cursor.next();
@@ -178,7 +182,7 @@ public class MongoStorage implements SpawnStorage {
     public CompletableFuture<java.util.Map<String, Location>> loadAll() {
         return CompletableFuture.supplyAsync(() -> {
             java.util.Map<String, Location> map = new java.util.HashMap<>();
-            if (collection == null) return map;
+            if (!ready || collection == null) return map;
             try (MongoCursor<Document> cursor = collection.find().iterator()) {
                 while (cursor.hasNext()) {
                     Document doc = cursor.next();

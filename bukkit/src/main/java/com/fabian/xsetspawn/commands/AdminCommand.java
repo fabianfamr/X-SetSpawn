@@ -101,6 +101,11 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
                 plugin.getCommand("delspawn").getExecutor().onCommand(sender, command, "delspawn", delSpawnArgs);
                 break;
 
+            case "import":
+                new com.fabian.xsetspawn.commands.ImportCommand(plugin).execute(sender,
+                        java.util.Arrays.copyOfRange(args, 1, args.length));
+                break;
+
             case "locate":
             case "language":
             case "lang":
@@ -166,14 +171,18 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
             completions.add("locate");
             completions.add("version");
             completions.add("update");
-            completions.add("help");
-            completions.add("setspawn");
-            completions.add("delspawn");
+            completions.add("import");
 
             return completions.stream()
                     .filter(s -> s.toLowerCase().startsWith(args[0].toLowerCase()))
                     .sorted()
                     .collect(Collectors.toList());
+        }
+
+        // Suggest import sources for /xss import <TAB>
+        if (args.length == 2 && args[0].equalsIgnoreCase("import")) {
+            return new com.fabian.xsetspawn.commands.ImportCommand(plugin).getTabCompletions(
+                    java.util.Arrays.copyOfRange(args, 1, args.length));
         }
 
         // Suggest existing named spawn names for /xss delspawn <TAB>

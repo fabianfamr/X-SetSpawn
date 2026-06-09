@@ -58,6 +58,7 @@ public class TextUtil {
             .compile("&#([0-9A-Fa-f]{6})((?:[&\u00a7][a-zA-Z0-9])*)([^&\u00a7<>])");
     private static final Pattern GRADIENT_PATTERN = Pattern
             .compile("<gradient:((?:#[0-9A-Fa-f]{6}:?)+)>(.*?)</gradient>", Pattern.CASE_INSENSITIVE);
+    private static final Pattern HEX_PATTERN = Pattern.compile("&#([0-9A-Fa-f]{6})");
 
     public static Component format(String input) {
         if (!ADVENTURE_AVAILABLE) {
@@ -311,8 +312,7 @@ public class TextUtil {
     }
 
     private static String translateHexToLegacy(String input) {
-        Pattern pattern = Pattern.compile("&#([0-9A-Fa-f]{6})");
-        Matcher matcher = pattern.matcher(input);
+        Matcher matcher = HEX_PATTERN.matcher(input);
         StringBuffer sb = new StringBuffer();
         while (matcher.find()) {
             String hex = matcher.group(1);

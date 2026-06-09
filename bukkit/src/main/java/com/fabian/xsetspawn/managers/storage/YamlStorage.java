@@ -98,9 +98,19 @@ public class YamlStorage implements SpawnStorage {
                 (float) config.getDouble(id + ".pitch"));
     }
 
+    private String sanitizeId(String id) {
+        // Remove any path traversal attempts and non-safe characters
+        return id.replaceAll("[.]{2,}", "")    // Remove ..
+               .replaceAll("[/\\\\]", "")       // Remove / and \
+               .replaceAll("[^a-zA-Z0-9_-]", ""); // Keep only safe chars
+    }
+
     @Override
     public CompletableFuture<Void> save(String id, Location location) {
         return CompletableFuture.supplyAsync(() -> {
+            id = sanitizeId(id);
+            if (id.isEmpty()) return null;
+
             File spawnFile = new File(spawnsFolder, id + ".yml");
             FileConfiguration spawnConfig = new YamlConfiguration();
 
@@ -123,6 +133,9 @@ public class YamlStorage implements SpawnStorage {
     @Override
     public CompletableFuture<Location> load(String id) {
         return CompletableFuture.supplyAsync(() -> {
+            id = sanitizeId(id);
+            if (id.isEmpty()) return null;
+
             File spawnFile = new File(spawnsFolder, id + ".yml");
             if (!spawnFile.exists()) return null;
 
@@ -147,12 +160,19 @@ public class YamlStorage implements SpawnStorage {
 
     @Override
     public CompletableFuture<Boolean> isSet(String id) {
-        return CompletableFuture.supplyAsync(() -> new File(spawnsFolder, id + ".yml").exists());
+        return CompletableFuture.supplyAsync(() -> {
+            id = sanitizeId(id);
+            if (id.isEmpty()) return false;
+            return new File(spawnsFolder, id + ".yml").exists();
+        });
     }
 
     @Override
     public CompletableFuture<Void> remove(String id) {
         return CompletableFuture.supplyAsync(() -> {
+            id = sanitizeId(id);
+            if (id.isEmpty()) return null;
+
             File spawnFile = new File(spawnsFolder, id + ".yml");
             if (spawnFile.exists() && !spawnFile.delete()) {
                 plugin.logError("Could not delete spawn file: " + id + ".yml");
@@ -180,15 +200,32 @@ public class YamlStorage implements SpawnStorage {
         return CompletableFuture.supplyAsync(() -> {
             java.util.Map<String, Location> map = new java.util.HashMap<>();
             try {
-                java.util.List<String> ids = getAllSpawnIds().join();
-                for (String id : ids) {
-                    Location loc = load(id).join();
-                    if (loc != null) {
-                        map.put(id, loc);
+                File[] files = spawnsFolder.listFiles((dir, name) -> name.endsWith(".yml"));
+                if (files != null) {
+                    for (File file : files) {
+                        try {
+                            String id = file.getName().replace(".yml", "");
+                            FileConfiguration spawnConfig = YamlConfiguration.loadConfiguration(file);
+                            String worldName = spawnConfig.getString("world");
+                            if (worldName == null || worldName.isEmpty()) continue;
+
+                            World world = Bukkit.getWorld(worldName);
+                            if (world == null) continue;
+
+                            Location loc = new Location(world,
+                                    spawnConfig.getDouble("x"),
+                                    spawnConfig.getDouble("y"),
+                                    spawnConfig.getDouble("z"),
+                                    (float) spawnConfig.getDouble("yaw"),
+                                    (float) spawnConfig.getDouble("pitch"));
+                            map.put(id, loc);
+                        } catch (Exception e) {
+                            plugin.logError("Error loading spawn file " + file.getName() + ": " + e.getMessage());
+                        }
                     }
                 }
             } catch (Exception e) {
-                plugin.logError("Error loading Yaml spawns: " + e.getMessage());
+                plugin.logError("Error loading spawns: " + e.getMessage());
             }
             return map;
         });

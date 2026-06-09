@@ -14,6 +14,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
+import com.fabian.xsetspawn.utils.ParticleUtil;
 import com.fabian.xsetspawn.utils.SchedulerUtil;
 
 import java.util.HashMap;
@@ -30,7 +31,17 @@ public class DelayManager implements Listener {
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
+    /** Event type for particle selection */
+    public enum TeleportEvent { SPAWN, BACK }
+
+    /**
+     * Original signature kept for backward compatibility — defaults to SPAWN event.
+     */
     public void scheduleTeleport(Player player, Location location, int seconds, String successMessage) {
+        scheduleTeleport(player, location, seconds, successMessage, TeleportEvent.SPAWN);
+    }
+
+    public void scheduleTeleport(Player player, Location location, int seconds, String successMessage, TeleportEvent eventType) {
         cancelTeleport(player);
 
         ManagerConfig config = plugin.getManagerConfig();
@@ -53,11 +64,11 @@ public class DelayManager implements Listener {
 
         SchedulerUtil.TaskWrapper particleTask = null;
         if (config.particlesEnabled) {
+            String countdownType = config.particleCountdownType;
+            int countdownAmount = config.particleCountdownAmount;
             particleTask = SchedulerUtil.runEntityTimer(plugin, player, () -> {
                 if (player.isOnline()) {
-                    com.fabian.xsetspawn.utils.ParticleUtil.spawnSpiral(player,
-                            config.particleType,
-                            config.particleAmount);
+                    ParticleUtil.spawnSpiral(player, countdownType, countdownAmount);
                 }
             }, 0L, 5L);
         }
@@ -107,7 +118,7 @@ public class DelayManager implements Listener {
                         }
 
                         // Economy
-                        if (config.economyEnabled) {
+                        if (config.economyEnabled && !com.fabian.xsetspawn.managers.Permission.BYPASS_ECONOMY.has(player)) {
                             double cost = config.economyCost;
                             plugin.getVaultHook().withdrawPlayer(player, cost);
                             if (cost > 0) {
@@ -133,8 +144,19 @@ public class DelayManager implements Listener {
                             }
 
                             if (config.particlesEnabled) {
-                                com.fabian.xsetspawn.utils.ParticleUtil.spawnParticle(player.getLocation().add(0, 1, 0),
-                                        config.particleType, 20);
+                                String arriveType, arriveAmountStr;
+                                switch (eventType) {
+                                    case BACK:
+                                        arriveType = config.particleBackType;
+                                        arriveAmountStr = String.valueOf(config.particleBackAmount);
+                                        break;
+                                    default:
+                                        arriveType = config.particleSpawnType;
+                                        arriveAmountStr = String.valueOf(config.particleSpawnAmount);
+                                        break;
+                                }
+                                ParticleUtil.spawnParticle(player.getLocation().add(0, 1, 0),
+                                        arriveType, Integer.parseInt(arriveAmountStr));
                             }
 
                             // Apply cooldown after successful delayed teleport
@@ -188,6 +210,9 @@ public class DelayManager implements Listener {
                     event.getFrom().getBlockZ() != event.getTo().getBlockZ()) {
 
                 cancelTeleport(player);
+                // Clear the back-location that was saved when the delay started,
+                // since the teleport never actually happened.
+                plugin.getBackManager().clearLocation(player);
                 player.sendMessage(plugin.getLanguageManager().getMessage("teleport-canceled"));
             }
         }

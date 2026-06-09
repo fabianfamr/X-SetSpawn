@@ -39,6 +39,7 @@ help-footer: "&8&m                                     "
 #               Erros (Errors)
 # ============================================
 no-permission: "&cVocê não tem permissão para usar este comando."
+command-disabled: "&cEste comando está desativado pelo administrador do servidor."
 spawn-not-set: "&cO spawn ainda não foi definido."
 spawn-not-set-world: "&cO spawn do mundo &e{0}&c não foi definido."
 player-only: "&cEste comando só pode ser usado por jogadores."

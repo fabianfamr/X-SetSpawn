@@ -152,7 +152,7 @@ public class SchedulerUtil {
                 Object entityScheduler = entityGetSchedulerMethod.invoke(entity);
                 long initialDelay = Math.max(1, delayTicks);
                 Consumer<?> consumer = (scheduledTask) -> task.run();
-                Object scheduledTaskObj = entityRunTimerMethod.invoke(entityScheduler, plugin, consumer, null, initialDelay, periodTicks);
+                Object scheduledTaskObj = entityRunTimerMethod.invoke(entityScheduler, plugin, consumer, () -> {}, initialDelay, periodTicks);
                 return createWrapper(scheduledTaskObj);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -169,7 +169,9 @@ public class SchedulerUtil {
             try {
                 Object entityScheduler = entityGetSchedulerMethod.invoke(entity);
                 Consumer<?> consumer = (scheduledTask) -> task.run();
-                entityRunMethod.invoke(entityScheduler, plugin, consumer, null);
+                entityRunMethod.invoke(entityScheduler, plugin, consumer, () -> {
+                    // Entity was removed/retired while task was pending — nothing to do
+                });
             } catch (Exception e) {
                 e.printStackTrace();
             }

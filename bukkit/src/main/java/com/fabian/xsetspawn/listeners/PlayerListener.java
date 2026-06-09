@@ -40,15 +40,14 @@ public class PlayerListener implements Listener {
                 }
             }
             if (!teleported) {
-                teleportToSpawn(player, false);
-                teleported = true;
+                teleported = teleportToSpawnChecked(player);
             }
         }
 
         if (!teleported && config.teleportOnJoinPermission) {
             SchedulerUtil.runRegionDelayed(plugin, player.getLocation(), () -> {
                 if (player.isOnline() && Permission.SPAWN_ON_JOIN.has(player)) {
-                    teleportToSpawn(player, false);
+                    teleportToSpawnChecked(player);
                 }
             }, 2L);
         }
@@ -74,6 +73,8 @@ public class PlayerListener implements Listener {
             if (spawnManager.isSpawnSet(world)) {
                 Location spawn = spawnManager.getSpawn(world);
                 if (spawn != null) {
+                    // Save back-location (death location) so /back can return here
+                    plugin.getBackManager().saveLocation(player);
                     event.setRespawnLocation(spawn);
                     plugin.getSpawnManager().playSpawnSound(player, spawn);
                 }
@@ -81,18 +82,18 @@ public class PlayerListener implements Listener {
         }
     }
 
-    private void teleportToSpawn(Player player, boolean playSound) {
+    private boolean teleportToSpawnChecked(Player player) {
         World world = player.getWorld();
         if (spawnManager.isSpawnSet(world)) {
             Location spawn = spawnManager.getSpawn(world);
             if (spawn != null) {
                 SchedulerUtil.teleport(player, spawn);
-                if (playSound) {
-                    plugin.getSpawnManager().playSpawnSound(player, spawn);
-                }
+                plugin.getSpawnManager().playSpawnSound(player, spawn);
                 applyProtection(player);
+                return true;
             }
         }
+        return false;
     }
 
     private void applyProtection(Player player) {
@@ -126,5 +127,3 @@ public class PlayerListener implements Listener {
         plugin.getCooldownManager().removeCooldown(uuid);
     }
 }
-
-

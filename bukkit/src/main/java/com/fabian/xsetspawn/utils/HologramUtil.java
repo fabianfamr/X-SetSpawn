@@ -5,13 +5,13 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import java.util.UUID;
 
 public class HologramUtil {
 
-    private static final Map<UUID, ArmorStand> activeHolograms = new HashMap<>();
+    private static final Map<UUID, ArmorStand> activeHolograms = new ConcurrentHashMap<>();
 
     public static void createHologram(Player player, Location location, String text, double heightOffset) {
         removeHologram(player);

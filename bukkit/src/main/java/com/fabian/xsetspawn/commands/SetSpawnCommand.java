@@ -210,9 +210,7 @@ public class SetSpawnCommand implements CommandExecutor, TabCompleter {
             java.util.List<String> completions = new java.util.ArrayList<>();
             completions.add("~");
             completions.add("firstjoin");
-            if (config.namedSpawns) {
-                completions.add("<name>");
-            }
+            // Named spawns are completed from existing names; no literal placeholder needed
             return completions.stream()
                     .filter(name -> name.toLowerCase().startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
