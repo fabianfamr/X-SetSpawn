@@ -4,9 +4,9 @@ import com.fabian.xsetspawn.XSetSpawn;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.HashMap;
 
 /**
  * BackManager - Stores players' previous locations in RAM.
@@ -66,6 +66,13 @@ public class BackManager {
      */
     public void clearLocation(Player player) {
         backLocations.remove(player.getUniqueId());
+    }
+
+    /**
+     * Removes the saved location by UUID (used on player quit to prevent memory leaks).
+     */
+    public void clearLocation(UUID uuid) {
+        backLocations.remove(uuid);
     }
 
     /**

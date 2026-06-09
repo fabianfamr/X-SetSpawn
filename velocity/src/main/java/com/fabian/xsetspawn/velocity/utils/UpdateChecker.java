@@ -27,7 +27,7 @@ public class UpdateChecker {
             String currentVersion = plugin.getServer().getPluginManager()
                     .fromInstance(plugin)
                     .flatMap(container -> container.getDescription().getVersion())
-                    .orElse("2.0");
+                    .orElse("2.1");
 
             URL url = new URL("https://api.spigotmc.org/legacy/update.php?resource=" + resourceId);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();

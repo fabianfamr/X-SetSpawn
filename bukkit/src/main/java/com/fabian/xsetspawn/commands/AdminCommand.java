@@ -4,6 +4,7 @@ import com.fabian.xsetspawn.XSetSpawn;
 import com.fabian.xsetspawn.managers.LanguageManager;
 import com.fabian.xsetspawn.managers.ManagerConfig;
 import com.fabian.xsetspawn.managers.Permission;
+import com.fabian.xsetspawn.utils.TextUtil;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -50,8 +51,9 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
                 config.reload();
                 plugin.getConfigManager().reloadConfiguration();
                 plugin.getLanguageManager().reloadLanguage();
+                plugin.getSpawnManager().loadCachesAsync(
+                        () -> sender.sendMessage(languageManager.getMessage("config-reloaded")));
                 plugin.setupMetrics();
-                sender.sendMessage(languageManager.getMessage("config-reloaded"));
                 break;
 
             case "update":
@@ -73,14 +75,18 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
             case "ver":
                 sender.sendMessage(languageManager.getMessageUnprefixed("version-header"));
                 sender.sendMessage(languageManager.getMessageUnprefixed("version-title"));
-                sender.sendMessage(languageManager.getMessageUnprefixed("version-info-version", plugin.getDescription().getVersion()));
-                sender.sendMessage(languageManager.getMessageUnprefixed("version-info-author", String.join(", ", plugin.getDescription().getAuthors())));
-                sender.sendMessage(languageManager.getMessageUnprefixed("version-info-platform", (plugin.getServer().getName().contains("Folia") ? "Folia" : "Bukkit/Paper")));
+                sender.sendMessage(languageManager.getMessageUnprefixed("version-info-version",
+                        plugin.getDescription().getVersion()));
+                sender.sendMessage(languageManager.getMessageUnprefixed("version-info-author",
+                        String.join(", ", plugin.getDescription().getAuthors())));
+                sender.sendMessage(languageManager.getMessageUnprefixed("version-info-platform",
+                        (plugin.getServer().getName().contains("Folia") ? "Folia" : "Bukkit/Paper")));
                 sender.sendMessage(languageManager.getMessageUnprefixed("version-footer"));
                 break;
 
             case "setspawn":
-                // Bypass ADMIN check for this specific subcommand, relying on SETSPAWN check inside SetSpawnCommand
+                // Bypass ADMIN check for this specific subcommand, relying on SETSPAWN check
+                // inside SetSpawnCommand
                 String[] setSpawnArgs = new String[args.length - 1];
                 System.arraycopy(args, 1, setSpawnArgs, 0, args.length - 1);
                 plugin.getCommand("setspawn").getExecutor().onCommand(sender, command, "setspawn", setSpawnArgs);
@@ -95,6 +101,12 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
                 plugin.getCommand("delspawn").getExecutor().onCommand(sender, command, "delspawn", delSpawnArgs);
                 break;
 
+            case "locate":
+            case "language":
+            case "lang":
+                handleLocateCommand(sender, args);
+                break;
+
             case "help":
             case "h":
             case "?":
@@ -106,6 +118,28 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    private void handleLocateCommand(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            String current = languageManager.getCurrentLanguage();
+            java.util.List<String> available = languageManager.getAvailableLanguages();
+            sender.sendMessage(languageManager.getMessageUnprefixed("locate-usage"));
+            sender.sendMessage(TextUtil.formatToLegacy("&7Current: &f" + current));
+            sender.sendMessage(TextUtil.formatToLegacy("&7Available: &f" + String.join(", ", available)));
+            return;
+        }
+
+        String newLang = args[1].toLowerCase();
+        boolean success = languageManager.setLanguage(newLang);
+
+        if (success) {
+            sender.sendMessage(languageManager.getMessage("locate-changed", newLang));
+        } else {
+            java.util.List<String> available = languageManager.getAvailableLanguages();
+            sender.sendMessage(languageManager.getMessage("locate-not-found", newLang));
+            sender.sendMessage(TextUtil.formatToLegacy("&7Available: &f" + String.join(", ", available)));
+        }
+    }
+
     private void showHelp(CommandSender sender) {
         sender.sendMessage(languageManager.getMessageUnprefixed("help-header"));
         sender.sendMessage(languageManager.getMessageUnprefixed("help-spawn"));
@@ -113,6 +147,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(languageManager.getMessageUnprefixed("help-delspawn"));
         sender.sendMessage(languageManager.getMessageUnprefixed("help-back"));
         sender.sendMessage(languageManager.getMessageUnprefixed("help-reload"));
+        sender.sendMessage(languageManager.getMessageUnprefixed("help-locate"));
         sender.sendMessage(languageManager.getMessageUnprefixed("help-version"));
         sender.sendMessage(languageManager.getMessageUnprefixed("help-update"));
         sender.sendMessage(languageManager.getMessageUnprefixed("help-help"));
@@ -128,6 +163,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
         if (args.length == 1) {
             List<String> completions = new ArrayList<>();
             completions.add("reload");
+            completions.add("locate");
             completions.add("version");
             completions.add("update");
             completions.add("help");
@@ -148,7 +184,16 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
                     .sorted()
                     .collect(Collectors.toList());
         }
+
+        // Suggest languages for /xss locate <TAB>
+        if (args.length == 2 && (args[0].equalsIgnoreCase("locate") || args[0].equalsIgnoreCase("language")
+                || args[0].equalsIgnoreCase("lang"))) {
+            return languageManager.getAvailableLanguages().stream()
+                    .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
+                    .sorted()
+                    .collect(Collectors.toList());
+        }
+
         return Collections.emptyList();
     }
 }
-

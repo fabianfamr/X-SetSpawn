@@ -63,6 +63,7 @@ public class ManagerConfig {
     public boolean teleportOnFirstJoin;
     public boolean teleportOnDeath;
     public boolean smartRespawn;
+    public boolean teleportOnJoinPermission;
 
     // 7. Holograms (Premium)
     public boolean hologramEnabled;
@@ -102,7 +103,7 @@ public class ManagerConfig {
         FileConfiguration config = plugin.getConfig();
 
         // Language & Updates
-        this.language = config.getString("language", "EN");
+        this.language = config.getString("language", "en").toLowerCase();
         this.prefix = config.getString("prefix", "&8[&bX-SetSpawn&8]&r ");
         this.perWorld = config.getBoolean("per-world", false);
         this.checkUpdates = config.getBoolean("check-updates", true);
@@ -152,6 +153,7 @@ public class ManagerConfig {
         this.teleportOnFirstJoin = config.getBoolean("events.on-first-join", true);
         this.teleportOnDeath = config.getBoolean("events.on-death", true);
         this.smartRespawn = config.getBoolean("events.smart-respawn", true);
+        this.teleportOnJoinPermission = config.getBoolean("events.spawn-on-join", false);
 
         // Holograms
         this.hologramEnabled = config.getBoolean("holograms.enabled", false);

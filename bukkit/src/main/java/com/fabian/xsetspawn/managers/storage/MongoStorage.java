@@ -13,6 +13,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -27,7 +28,11 @@ public class MongoStorage implements SpawnStorage {
     private MongoCollection<Document> collection;
     private final XSetSpawn plugin;
 
+    private static boolean logsSilenced = false;
+
     private void silenceMongoLogs() {
+        if (logsSilenced) return;
+        
         // Disable JUL logs explicitly for all sub-loggers (Fallback if Log4j2 isn't handling it natively)
         java.util.logging.Logger.getLogger("org.mongodb.driver").setLevel(java.util.logging.Level.SEVERE);
         java.util.logging.Logger.getLogger("org.mongodb.driver.client").setLevel(java.util.logging.Level.SEVERE);
@@ -47,6 +52,8 @@ public class MongoStorage implements SpawnStorage {
             setLevelMethod.invoke(null, "org.mongodb.driver.cluster", offLevel);
             setLevelMethod.invoke(null, "org.mongodb.driver.connection", offLevel);
         } catch (Exception ignore) {}
+        
+        logsSilenced = true;
     }
 
     public MongoStorage(XSetSpawn plugin, String uri, String dbName, String collectionName) {
@@ -55,93 +62,143 @@ public class MongoStorage implements SpawnStorage {
 
         // Fix for Minecraft PluginClassLoader isolation issues with MongoDB ServiceLoader
         ClassLoader originalLoader = Thread.currentThread().getContextClassLoader();
-        try {
-            Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
-            plugin.log("&eConnecting to MONGODB database...");
-            this.mongoClient = MongoClients.create(uri);
-            this.database = mongoClient.getDatabase(dbName);
-            this.collection = database.getCollection(collectionName);
-            
-            // Ping to verify connection and auth immediately, instead of lazy connecting.
-            this.database.runCommand(new Document("ping", 1));
-            
-            plugin.log("&aMONGODB database connected and ready.");
-        } catch (Exception e) {
-            plugin.logError("Failed to initialize MongoDB connection: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        } finally {
-            Thread.currentThread().setContextClassLoader(originalLoader);
-        }
-    }
+        com.fabian.xsetspawn.utils.SchedulerUtil.runAsync(plugin, () -> {
+            try {
+                Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+                plugin.log("&eConnecting to MONGODB database...");
+                this.mongoClient = MongoClients.create(uri);
+                this.database = mongoClient.getDatabase(dbName);
+                this.collection = database.getCollection(collectionName);
+                
+                // Ping to verify connection and auth immediately, instead of lazy connecting.
+                this.database.runCommand(new Document("ping", 1));
+                
+                plugin.log("&aMONGODB database connected and ready.");
 
-    @Override
-    public void save(String id, Location location) {
-        try {
-            Document doc = new Document("_id", id)
-                    .append("world", location.getWorld().getName())
-                    .append("x", location.getX())
-                    .append("y", location.getY())
-                    .append("z", location.getZ())
-                    .append("yaw", (double) location.getYaw())
-                    .append("pitch", (double) location.getPitch());
-
-            collection.replaceOne(eq("_id", id), doc, new ReplaceOptions().upsert(true));
-        } catch (Exception e) {
-            plugin.logError("Error saving to MongoDB: " + e.getMessage());
-        }
-    }
-
-    @Override
-    public Location load(String id) {
-        try {
-            Document doc = collection.find(eq("_id", id)).first();
-            if (doc == null) return null;
-
-            String worldName = doc.getString("world");
-            World world = Bukkit.getWorld(worldName);
-            if (world == null) return null;
-
-            return new Location(world,
-                    doc.getDouble("x"),
-                    doc.getDouble("y"),
-                    doc.getDouble("z"),
-                    doc.getDouble("yaw").floatValue(),
-                    doc.getDouble("pitch").floatValue());
-        } catch (Exception e) {
-            plugin.logError("Error loading from MongoDB: " + e.getMessage());
-            return null;
-        }
-    }
-
-    @Override
-    public boolean isSet(String id) {
-        try {
-            return collection.find(eq("_id", id)).first() != null;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    @Override
-    public void remove(String id) {
-        try {
-            collection.deleteOne(eq("_id", id));
-        } catch (Exception e) {}
-    }
-
-    @Override
-    public List<String> getAllSpawnIds() {
-        List<String> ids = new ArrayList<>();
-        try (MongoCursor<Document> cursor = collection.find().iterator()) {
-            while (cursor.hasNext()) {
-                Document doc = cursor.next();
-                ids.add(doc.getString("_id"));
+                // Trigger cache load once connected
+                if (plugin.getSpawnManager() != null) {
+                    plugin.getSpawnManager().loadCachesAsync();
+                }
+            } catch (Exception e) {
+                plugin.logError("Failed to initialize MongoDB connection: " + e.getMessage());
+                e.printStackTrace();
+            } finally {
+                Thread.currentThread().setContextClassLoader(originalLoader);
             }
-        } catch (Exception e) {
-            plugin.logError("Error fetching from MongoDB: " + e.getMessage());
-        }
-        return ids;
+        });
+    }
+
+    @Override
+    public CompletableFuture<Void> save(String id, Location location) {
+        return CompletableFuture.supplyAsync(() -> {
+            if (collection == null) return null;
+            try {
+                Document doc = new Document("_id", id)
+                        .append("world", location.getWorld().getName())
+                        .append("x", location.getX())
+                        .append("y", location.getY())
+                        .append("z", location.getZ())
+                        .append("yaw", (double) location.getYaw())
+                        .append("pitch", (double) location.getPitch());
+
+                collection.replaceOne(eq("_id", id), doc, new ReplaceOptions().upsert(true));
+            } catch (Exception e) {
+                plugin.logError("Error saving to MongoDB: " + e.getMessage());
+            }
+            return null;
+        });
+    }
+
+    @Override
+    public CompletableFuture<Location> load(String id) {
+        return CompletableFuture.supplyAsync(() -> {
+            if (collection == null) return null;
+            try {
+                Document doc = collection.find(eq("_id", id)).first();
+                if (doc == null) return null;
+
+                String worldName = doc.getString("world");
+                World world = Bukkit.getWorld(worldName);
+                if (world == null) return null;
+
+                return new Location(world,
+                        doc.getDouble("x"),
+                        doc.getDouble("y"),
+                        doc.getDouble("z"),
+                        doc.getDouble("yaw").floatValue(),
+                        doc.getDouble("pitch").floatValue());
+            } catch (Exception e) {
+                plugin.logError("Error loading from MongoDB: " + e.getMessage());
+                return null;
+            }
+        });
+    }
+
+    @Override
+    public CompletableFuture<Boolean> isSet(String id) {
+        return CompletableFuture.supplyAsync(() -> {
+            if (collection == null) return false;
+            try {
+                return collection.find(eq("_id", id)).first() != null;
+            } catch (Exception e) {
+                return false;
+            }
+        });
+    }
+
+    @Override
+    public CompletableFuture<Void> remove(String id) {
+        return CompletableFuture.supplyAsync(() -> {
+            if (collection == null) return null;
+            try {
+                collection.deleteOne(eq("_id", id));
+            } catch (Exception e) {}
+            return null;
+        });
+    }
+
+    @Override
+    public CompletableFuture<List<String>> getAllSpawnIds() {
+        return CompletableFuture.supplyAsync(() -> {
+            List<String> ids = new ArrayList<>();
+            if (collection == null) return ids;
+            try (MongoCursor<Document> cursor = collection.find().iterator()) {
+                while (cursor.hasNext()) {
+                    Document doc = cursor.next();
+                    ids.add(doc.getString("_id"));
+                }
+            } catch (Exception e) {
+                plugin.logError("Error fetching from MongoDB: " + e.getMessage());
+            }
+            return ids;
+        });
+    }
+
+    @Override
+    public CompletableFuture<java.util.Map<String, Location>> loadAll() {
+        return CompletableFuture.supplyAsync(() -> {
+            java.util.Map<String, Location> map = new java.util.HashMap<>();
+            if (collection == null) return map;
+            try (MongoCursor<Document> cursor = collection.find().iterator()) {
+                while (cursor.hasNext()) {
+                    Document doc = cursor.next();
+                    String worldName = doc.getString("world");
+                    World world = Bukkit.getWorld(worldName);
+                    if (world != null) {
+                        Location loc = new Location(world,
+                                doc.getDouble("x"),
+                                doc.getDouble("y"),
+                                doc.getDouble("z"),
+                                doc.getDouble("yaw").floatValue(),
+                                doc.getDouble("pitch").floatValue());
+                        map.put(doc.getString("_id"), loc);
+                    }
+                }
+            } catch (Exception e) {
+                plugin.logError("Error loading all from MongoDB: " + e.getMessage());
+            }
+            return map;
+        });
     }
 
     @Override

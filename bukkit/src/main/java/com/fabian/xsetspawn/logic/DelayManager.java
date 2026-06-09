@@ -23,7 +23,7 @@ import java.util.UUID;
 public class DelayManager implements Listener {
 
     private final XSetSpawn plugin;
-    private final Map<UUID, TeleportSession> pendingTeleports = new HashMap<>();
+    private final Map<UUID, TeleportSession> pendingTeleports = new java.util.concurrent.ConcurrentHashMap<>();
 
     public DelayManager(XSetSpawn plugin) {
         this.plugin = plugin;
@@ -53,7 +53,7 @@ public class DelayManager implements Listener {
 
         SchedulerUtil.TaskWrapper particleTask = null;
         if (config.particlesEnabled) {
-            particleTask = SchedulerUtil.runRegionTimer(plugin, player.getLocation(), () -> {
+            particleTask = SchedulerUtil.runEntityTimer(plugin, player, () -> {
                 if (player.isOnline()) {
                     com.fabian.xsetspawn.utils.ParticleUtil.spawnSpiral(player,
                             config.particleType,
@@ -64,7 +64,7 @@ public class DelayManager implements Listener {
 
         final SchedulerUtil.TaskWrapper finalParticleTask = particleTask;
         
-        SchedulerUtil.TaskWrapper countdownTask = SchedulerUtil.runRegionTimer(plugin, player.getLocation(), new Runnable() {
+        SchedulerUtil.TaskWrapper countdownTask = SchedulerUtil.runEntityTimer(plugin, player, new Runnable() {
             int timeLeft = seconds;
             
             @Override
@@ -147,7 +147,7 @@ public class DelayManager implements Listener {
             }
         }, 0L, 20L);
 
-        pendingTeleports.put(player.getUniqueId(), new TeleportSession(countdownTask, finalParticleTask, bossBar, player));
+        pendingTeleports.put(player.getUniqueId(), new TeleportSession(countdownTask, finalParticleTask, bossBar, player.getUniqueId()));
     }
 
     private BossBar createBossBar(Player player, int seconds) {
@@ -177,7 +177,7 @@ public class DelayManager implements Listener {
 
     @EventHandler
     public void onMove(PlayerMoveEvent event) {
-        if (!plugin.getManagerConfig().delayCancelOnMove) {
+        if (!plugin.getManagerConfig().delayCancelOnMove || pendingTeleports.isEmpty()) {
             return;
         }
 
@@ -193,22 +193,19 @@ public class DelayManager implements Listener {
         }
     }
 
-    @EventHandler
-    public void onQuit(org.bukkit.event.player.PlayerQuitEvent event) {
-        cancelTeleport(event.getPlayer());
-    }
 
-    private static class TeleportSession {
+
+    private class TeleportSession {
         private final SchedulerUtil.TaskWrapper teleportTask;
         private final SchedulerUtil.TaskWrapper particleTask;
         private final BossBar bossBar;
-        private final Player player;
+        private final UUID playerUuid;
 
-        public TeleportSession(SchedulerUtil.TaskWrapper teleportTask, SchedulerUtil.TaskWrapper particleTask, BossBar bossBar, Player player) {
+        public TeleportSession(SchedulerUtil.TaskWrapper teleportTask, SchedulerUtil.TaskWrapper particleTask, BossBar bossBar, UUID playerUuid) {
             this.teleportTask = teleportTask;
             this.particleTask = particleTask;
             this.bossBar = bossBar;
-            this.player = player;
+            this.playerUuid = playerUuid;
         }
 
         public void cancel() {
@@ -216,10 +213,20 @@ public class DelayManager implements Listener {
                 teleportTask.cancel();
             if (particleTask != null)
                 particleTask.cancel();
-            if (bossBar != null) {
-                try { bossBar.removePlayer(player); bossBar.removeAll(); } catch (Throwable ignored) {}
+            
+            Player player = Bukkit.getPlayer(playerUuid);
+            if (player != null && player.isOnline()) {
+                SchedulerUtil.runEntity(plugin, player, () -> {
+                    if (bossBar != null) {
+                        try { bossBar.removePlayer(player); bossBar.removeAll(); } catch (Throwable ignored) {}
+                    }
+                    HologramUtil.removeHologram(player);
+                });
+            } else {
+                if (bossBar != null) {
+                    try { bossBar.removeAll(); } catch (Throwable ignored) {}
+                }
             }
-            HologramUtil.removeHologram(player);
         }
     }
 }

@@ -8,6 +8,8 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
+import java.util.Map;
+
 /**
  * SpawnManager - Manages spawn locations by delegating to the current StorageManager.
  * Updated for v1.5 to support SQL and MongoDB backends, and premium effects.
@@ -17,16 +19,53 @@ public class SpawnManager {
     private final XSetSpawn plugin;
     private final ManagerConfig config;
     private final SpawnStorage storage;
+    private final Map<String, Location> spawnCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private Color cachedFireworkColor = Color.BLUE;
 
     public SpawnManager(XSetSpawn plugin) {
         this.plugin = plugin;
         this.config = plugin.getManagerConfig();
         this.storage = plugin.getStorageManager().getStorage();
+        this.cachedFireworkColor = resolveColorByName(config.fireworksColor);
+        // loadCaches() is now called asynchronously by the storage backends once connected.
+    }
+
+    public void loadCaches() {
+        spawnCache.clear();
+        java.util.Map<String, Location> allSpawns = storage.loadAll().join();
+        if (allSpawns != null) {
+            spawnCache.putAll(allSpawns);
+        }
+    }
+
+    public void loadCachesAsync() {
+        loadCachesAsync(null);
+    }
+
+    public void loadCachesAsync(Runnable callback) {
+        storage.loadAll().thenAccept(allSpawns -> {
+            org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                if (allSpawns != null) {
+                    spawnCache.clear();
+                    spawnCache.putAll(allSpawns);
+                } else {
+                    spawnCache.clear();
+                }
+                plugin.log("&aLoaded " + spawnCache.size() + " spawns.");
+                if (callback != null) {
+                    callback.run();
+                }
+            });
+        });
     }
 
     public void setSpawn(Location location) {
         String id = getSpawnId(location.getWorld());
-        storage.save(id, location);
+        spawnCache.put(id, location);
+        storage.save(id, location).exceptionally(ex -> {
+            plugin.logError("Failed to save spawn " + id + ": " + ex.getMessage());
+            return null;
+        });
     }
 
     public void setSpawn(World world, double x, double y, double z, float yaw, float pitch) {
@@ -36,7 +75,7 @@ public class SpawnManager {
 
     public Location getSpawn(World world) {
         String id = getSpawnId(world);
-        return storage.load(id);
+        return spawnCache.get(id);
     }
 
     private String getSpawnId(World world) {
@@ -48,7 +87,7 @@ public class SpawnManager {
     }
 
     public boolean isSpawnSet(World world) {
-        return storage.isSet(getSpawnId(world));
+        return spawnCache.containsKey(getSpawnId(world));
     }
 
     // ==========================================
@@ -63,7 +102,12 @@ public class SpawnManager {
     }
 
     public void setNamedSpawn(String name, Location location) {
-        storage.save(getNamedSpawnId(name), location);
+        String id = getNamedSpawnId(name);
+        spawnCache.put(id, location);
+        storage.save(id, location).exceptionally(ex -> {
+            plugin.logError("Failed to save named spawn " + id + ": " + ex.getMessage());
+            return null;
+        });
     }
 
     public void setNamedSpawn(String name, World world, double x, double y, double z, float yaw, float pitch) {
@@ -71,19 +115,23 @@ public class SpawnManager {
     }
 
     public Location getNamedSpawn(String name) {
-        return storage.load(getNamedSpawnId(name));
+        return spawnCache.get(getNamedSpawnId(name));
     }
 
     public boolean isNamedSpawnSet(String name) {
-        return storage.isSet(getNamedSpawnId(name));
+        return spawnCache.containsKey(getNamedSpawnId(name));
     }
 
     public void removeNamedSpawn(String name) {
-        storage.remove(getNamedSpawnId(name));
+        String id = getNamedSpawnId(name);
+        spawnCache.remove(id);
+        storage.remove(id);
     }
 
     public void removeSpawn(World world) {
-        storage.remove(getSpawnId(world));
+        String id = getSpawnId(world);
+        spawnCache.remove(id);
+        storage.remove(id);
     }
 
     /**
@@ -92,7 +140,7 @@ public class SpawnManager {
      */
     public java.util.List<String> getAllNamedSpawnNames() {
         java.util.List<String> names = new java.util.ArrayList<>();
-        for (String id : storage.getAllSpawnIds()) {
+        for (String id : spawnCache.keySet()) {
             if (id.startsWith("spawn-custom-")) {
                 names.add(id.substring("spawn-custom-".length()));
             }
@@ -104,7 +152,7 @@ public class SpawnManager {
      * Returns ALL spawn IDs (including defaults) from storage.
      */
     public java.util.List<String> getAllSpawnIds() {
-        return storage.getAllSpawnIds();
+        return new java.util.ArrayList<>(spawnCache.keySet());
     }
 
     public void playSpawnSound(Player player, Location location) {
@@ -122,8 +170,7 @@ public class SpawnManager {
 
         // Fireworks
         if (config.fireworksEnabled) {
-            Color color = resolveColorByName(config.fireworksColor);
-            VisualUtil.spawnFirework(location.clone().add(0, 1, 0), color, config.fireworksPower);
+            VisualUtil.spawnFirework(location.clone().add(0, 1, 0), cachedFireworkColor, config.fireworksPower);
         }
     }
 
@@ -146,11 +193,15 @@ public class SpawnManager {
     }
 
     public Location getFirstJoinSpawn() {
-        return storage.load("first-join-spawn");
+        return spawnCache.get("first-join-spawn");
     }
 
     public void setFirstJoinSpawn(Location location) {
-        storage.save("first-join-spawn", location);
+        spawnCache.put("first-join-spawn", location);
+        storage.save("first-join-spawn", location).exceptionally(ex -> {
+            plugin.logError("Failed to save first-join spawn: " + ex.getMessage());
+            return null;
+        });
     }
 }
 

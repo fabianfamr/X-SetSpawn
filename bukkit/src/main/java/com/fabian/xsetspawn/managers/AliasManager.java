@@ -57,6 +57,11 @@ public class AliasManager {
             String cleaned = alias.toLowerCase().trim().replace("/", "");
             if (cleaned.isEmpty()) continue;
 
+            // Warn if the command already exists
+            if (commandMap.getCommand(cleaned) != null) {
+                plugin.getLogger().warning("Alias /" + cleaned + " for /" + commandName + " overrides an existing server command!");
+            }
+
             // Pass-through command that delegates to the original
             Command proxy = new Command(cleaned) {
                 @Override

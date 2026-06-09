@@ -66,6 +66,7 @@ public class XSetSpawnBungee extends Plugin implements Listener {
     // Cooldowns and pending tasks
     private final Map<UUID, Long> cooldowns = new HashMap<>();
     private final Map<UUID, ScheduledTask> pendingTeleports = new HashMap<>();
+    private final Map<UUID, Long> lastGlobalTeleport = new HashMap<>();
 
     // Metrics
     private Metrics metrics;
@@ -89,7 +90,7 @@ public class XSetSpawnBungee extends Plugin implements Listener {
         }
 
         getLogger().info(translateColors("&b----------------------------------------------"));
-        getLogger().info(translateColors("  &3X-SetSpawn &bv2.0 &aenabled! Enjoy spawning!"));
+        getLogger().info(translateColors("  &3X-SetSpawn &bv2.1 &aenabled! Enjoy spawning!"));
         getLogger().info(translateColors("  &fLanguage: &e" + language + " &f| Lobby: &e" + targetServer));
         getLogger().info(translateColors("  &fCommands: &e" + aliases + " &fand &b/setlobby"));
         getLogger().info(translateColors("&b----------------------------------------------"));
@@ -110,7 +111,7 @@ public class XSetSpawnBungee extends Plugin implements Listener {
         if (metrics != null) {
             metrics.shutdown();
         }
-        getLogger().info("X-SetSpawn v2.0 disabled!");
+        getLogger().info("X-SetSpawn v2.1 disabled!");
     }
 
     @EventHandler
@@ -131,7 +132,6 @@ public class XSetSpawnBungee extends Plugin implements Listener {
                     }
                 } else if (subChannel.equals("PlayerReady")) {
                     // Backend says player finished loading terrain, send coords immediately
-                    String playerUUIDStr = event.getReceiver().toString(); // In Bungee, Receiver is the player
                     if (event.getReceiver() instanceof ProxiedPlayer) {
                         ProxiedPlayer player = (ProxiedPlayer) event.getReceiver();
                         if (player.getServer() != null && player.getServer().getInfo().getName().equalsIgnoreCase(targetServer)) {
@@ -186,6 +186,12 @@ public class XSetSpawnBungee extends Plugin implements Listener {
             // Determine delay: initial join vs server switch
             int delay = (event.getFrom() == null) ? joinTeleportDelay : switchTeleportDelay;
             
+            // Cancel any old task to prevent memory leaks and zombie teleports
+            ScheduledTask oldTask = pendingTeleports.remove(player.getUniqueId());
+            if (oldTask != null) {
+                oldTask.cancel();
+            }
+
             // Use configured delay to ensure the channel is fully open and backend is ready (Fallback)
             ScheduledTask task = getProxy().getScheduler().schedule(this, () -> {
                 pendingTeleports.remove(player.getUniqueId());
@@ -197,9 +203,31 @@ public class XSetSpawnBungee extends Plugin implements Listener {
         }
     }
 
+    @EventHandler
+    public void onPlayerDisconnect(net.md_5.bungee.api.event.PlayerDisconnectEvent event) {
+        UUID uuid = event.getPlayer().getUniqueId();
+        ScheduledTask task = pendingTeleports.remove(uuid);
+        if (task != null) {
+            task.cancel();
+        }
+        cooldowns.remove(uuid);
+        lastGlobalTeleport.remove(uuid);
+    }
+
     private void sendGlobalLobbyTeleport(ProxiedPlayer player, boolean silent) {
         if (!lobbyCoordsSet || player.getServer() == null) return;
         
+        // Anti-Double-Teleport Lock (500ms)
+        long now = System.currentTimeMillis();
+        long last = lastGlobalTeleport.getOrDefault(player.getUniqueId(), 0L);
+        if (now - last < 500) {
+            if (debugEnabled) {
+                getLogger().info("Ignored redundant GlobalLobbyTeleport for " + player.getName() + " (Last was " + (now - last) + "ms ago)");
+            }
+            return;
+        }
+        lastGlobalTeleport.put(player.getUniqueId(), now);
+
         if (debugEnabled) {
             getLogger().info("Sending GlobalLobbyTeleport for player '" + player.getName() + "' (Silent: " + silent + ")");
         }
@@ -218,22 +246,24 @@ public class XSetSpawnBungee extends Plugin implements Listener {
     }
 
     private void saveLocationData() {
-        try {
-            File dataFile = new File(getDataFolder(), "data.yml");
-            List<String> lines = new ArrayList<>();
-            lines.add("target-server: \"" + targetServer + "\"");
-            if (lobbyCoordsSet) {
-                lines.add("world: \"" + lobbyWorld + "\"");
-                lines.add("x: " + lobbyX);
-                lines.add("y: " + lobbyY);
-                lines.add("z: " + lobbyZ);
-                lines.add("yaw: " + lobbyYaw);
-                lines.add("pitch: " + lobbyPitch);
+        getProxy().getScheduler().runAsync(this, () -> {
+            try {
+                File dataFile = new File(getDataFolder(), "data.yml");
+                List<String> lines = new ArrayList<>();
+                lines.add("target-server: \"" + targetServer + "\"");
+                if (lobbyCoordsSet) {
+                    lines.add("world: \"" + lobbyWorld + "\"");
+                    lines.add("x: " + lobbyX);
+                    lines.add("y: " + lobbyY);
+                    lines.add("z: " + lobbyZ);
+                    lines.add("yaw: " + lobbyYaw);
+                    lines.add("pitch: " + lobbyPitch);
+                }
+                Files.write(dataFile.toPath(), lines);
+            } catch (IOException e) {
+                getLogger().warning("Could not save data.yml: " + e.getMessage());
             }
-            Files.write(dataFile.toPath(), lines);
-        } catch (IOException e) {
-            getLogger().warning("Could not save data.yml: " + e.getMessage());
-        }
+        });
     }
 
     public void updateTargetServer(String newServer) {
@@ -253,7 +283,7 @@ public class XSetSpawnBungee extends Plugin implements Listener {
                     if (parts.length < 2) continue;
                     
                     String key = parts[0].trim();
-                    String value = parts[1].trim().replace("\"", "").replace("'", "");
+                    String value = parts[1].trim().replaceAll("[\"']", "");
                     
                     switch (key) {
                         case "target-server": this.targetServer = value; break;
@@ -401,7 +431,7 @@ public class XSetSpawnBungee extends Plugin implements Listener {
             if (trimmed.isEmpty() || trimmed.startsWith("#")) continue;
 
             if (trimmed.startsWith("- ") && inAliases) {
-                String value = trimmed.substring(2).trim().replace("\"", "").replace("'", "");
+                String value = trimmed.substring(2).trim().replaceAll("[\"']", "");
                 if (!value.isEmpty()) aliasList.add(value);
                 continue;
             } else if (!trimmed.startsWith("- ")) {
@@ -411,7 +441,7 @@ public class XSetSpawnBungee extends Plugin implements Listener {
             if (trimmed.contains(":")) {
                 String[] parts = trimmed.split(":", 2);
                 String key = parts[0].trim();
-                String value = parts.length > 1 ? parts[1].trim().replace("\"", "").replace("'", "") : "";
+                String value = parts.length > 1 ? parts[1].trim().replaceAll("[\"']", "") : "";
 
                 switch (key) {
                     case "cooldown":

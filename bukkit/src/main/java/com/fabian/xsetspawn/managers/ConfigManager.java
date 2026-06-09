@@ -223,7 +223,11 @@ public class ConfigManager {
 
     // Deprecated in favor of Permission class
     public boolean hasPermission(org.bukkit.entity.Player player, String node) {
-        return Permission.valueOf(node.toUpperCase().replace("-", "_")).has(player);
+        try {
+            return Permission.valueOf(node.toUpperCase().replace("-", "_")).has(player);
+        } catch (IllegalArgumentException e) {
+            return player.hasPermission("xsetspawn." + node);
+        }
     }
 }
 

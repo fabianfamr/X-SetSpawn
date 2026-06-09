@@ -1,5 +1,5 @@
 name: X-SetSpawn
-version: 2.0
+version: 2.2
 main: com.fabian.xsetspawn.XSetSpawn
 api-version: "1.13"
 folia-supported: true
@@ -70,6 +70,14 @@ permissions:
     description: Teleport to spawn for free, ignoring economy cost.
     default: op
 
+  xsetspawn.locate:
+    description: Allows viewing available languages with /xss locate.
+    default: op
+
   xsetspawn.back:
     description: Allows using /back to return to the previous location.
     default: true
+
+  xsetspawn.spawn-on-join:
+    description: Allows teleporting to spawn on join.
+    default: false

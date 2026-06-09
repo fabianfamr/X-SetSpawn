@@ -8,18 +8,18 @@
 #                                    | |
 #                                    |_|
 # ==============================================================================
-# X-SetSpawn v2.0 | Developed by Fabian (X Proyects)
+# X-SetSpawn | Developed by Fabian (X Proyects)
 # Discord: https://discord.gg/Yb6GsfGWmd
 # Supported versions: 1.8.8 - 26.1+
 # ==============================================================================
 
 # Internal config version. DO NOT CHANGE!
 # If this is lower than the plugin's version, the config will auto-update.
-config-code: 6
+config-code: 7
 
 # Plugin language.
 # Available: ES (Spanish), EN (English), JA (Japanese), PT (Portuguese), RU (Russian), CUSTOM
-language: EN
+language: en
 
 # Global prefix for all plugin messages.
 prefix: "&8[&bX-SetSpawn&8]&r "
@@ -107,6 +107,9 @@ events:
   # true  = Bed/Anchor takes priority over spawn
   # false = Always respawn at spawn
   smart-respawn: true
+
+  # Teleport players to spawn on join if they have the permission 'xsetspawn.spawn-on-join'?
+  spawn-on-join: false
 
 # ============================================
 #           Teleport Mechanics

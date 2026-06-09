@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.managers;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.TextUtil;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -17,40 +18,77 @@ public class LanguageManager {
     private final XSetSpawn plugin;
     private FileConfiguration languageConfig;
     private String currentLanguage;
+    private boolean hasPAPI = false;
 
     public LanguageManager(XSetSpawn plugin) {
         this.plugin = plugin;
+        migrateOldLanguages();
         loadLanguage();
     }
 
-    public void loadLanguage() {
-        this.currentLanguage = plugin.getManagerConfig().language;
+    private void migrateOldLanguages() {
+        File oldFolder = new File(plugin.getDataFolder(), "languages");
+        File newFolder = new File(plugin.getDataFolder(), "messages");
+        if (!oldFolder.exists()) return;
+        if (!newFolder.exists()) {
+            newFolder.mkdirs();
+        }
+        File[] oldFiles = oldFolder.listFiles((dir, name) -> name.endsWith(".yml"));
+        if (oldFiles != null) {
+            for (File f : oldFiles) {
+                File dest = new File(newFolder, f.getName().toLowerCase());
+                try {
+                    java.nio.file.Files.copy(f.toPath(), dest.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                } catch (Exception e) {
+                    plugin.getLogger().warning("Could not migrate " + f.getName() + " to messages/: " + e.getMessage());
+                }
+            }
+        }
+        deleteDirectory(oldFolder);
+        plugin.log("&eMigrated old languages/ folder to messages/");
+    }
 
-        // Create languages folder if it doesn't exist
-        File languagesFolder = new File(plugin.getDataFolder(), "languages");
-        if (!languagesFolder.exists()) {
-            languagesFolder.mkdirs();
+    private void deleteDirectory(File dir) {
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                if (f.isDirectory()) {
+                    deleteDirectory(f);
+                }
+                f.delete();
+            }
+        }
+        dir.delete();
+    }
+
+    public void loadLanguage() {
+        this.currentLanguage = plugin.getManagerConfig().language.toLowerCase();
+
+        File messagesFolder = new File(plugin.getDataFolder(), "messages");
+        if (!messagesFolder.exists()) {
+            messagesFolder.mkdirs();
         }
 
-        // Save default language files
-        saveResourceIfNotExists("languages/ES.yml");
-        saveResourceIfNotExists("languages/EN.yml");
-        saveResourceIfNotExists("languages/JA.yml");
-        saveResourceIfNotExists("languages/PT.yml");
-        saveResourceIfNotExists("languages/RU.yml");
-        saveResourceIfNotExists("languages/CUSTOM.yml");
+        saveResourceIfNotExists("messages/en.yml");
+        saveResourceIfNotExists("messages/es.yml");
+        saveResourceIfNotExists("messages/ja.yml");
+        saveResourceIfNotExists("messages/pt.yml");
+        saveResourceIfNotExists("messages/ru.yml");
+        saveResourceIfNotExists("messages/custom.yml");
 
-        // Load the selected language
-        File languageFile = new File(plugin.getDataFolder(), "languages/" + currentLanguage + ".yml");
+        File languageFile = new File(plugin.getDataFolder(), "messages/" + currentLanguage + ".yml");
         if (!languageFile.exists()) {
-            plugin.getLogger().warning("Language file " + currentLanguage + ".yml not found! Using EN.yml");
-            languageFile = new File(plugin.getDataFolder(), "languages/EN.yml");
+            plugin.getLogger().warning("Language file " + currentLanguage + ".yml not found! Using en.yml");
+            languageFile = new File(plugin.getDataFolder(), "messages/en.yml");
+            this.currentLanguage = "en";
         }
 
         this.languageConfig = YamlConfiguration.loadConfiguration(languageFile);
 
-        // Load defaults from resources (to update missing keys)
-        InputStream defaultStream = plugin.getResource("languages/" + currentLanguage + ".yml");
+        InputStream defaultStream = plugin.getResource("messages/" + currentLanguage + ".yml");
+        if (defaultStream == null && !currentLanguage.equals("en")) {
+            defaultStream = plugin.getResource("messages/en.yml");
+        }
         if (defaultStream != null) {
             YamlConfiguration defaultConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(defaultStream));
             languageConfig.setDefaults(defaultConfig);
@@ -62,10 +100,62 @@ public class LanguageManager {
                 plugin.getLogger().warning("Could not save language file updates: " + e.getMessage());
             }
         }
+
+        this.hasPAPI = Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null;
     }
 
     public void reloadLanguage() {
         loadLanguage();
+    }
+
+    /**
+     * Get available language files
+     */
+    public java.util.List<String> getAvailableLanguages() {
+        java.util.List<String> langs = new java.util.ArrayList<>();
+        File messagesFolder = new File(plugin.getDataFolder(), "messages");
+        if (messagesFolder.exists() && messagesFolder.isDirectory()) {
+            File[] files = messagesFolder.listFiles((dir, name) -> name.endsWith(".yml"));
+            if (files != null) {
+                for (File f : files) {
+                    String name = f.getName();
+                    langs.add(name.replace(".yml", ""));
+                }
+            }
+        }
+        return langs;
+    }
+
+    /**
+     * Change the language
+     */
+    public boolean setLanguage(String lang) {
+        String newLang = lang.toLowerCase();
+        java.util.List<String> available = getAvailableLanguages();
+
+        // Convert available languages to lowercase for comparison
+        java.util.List<String> availableLower = new java.util.ArrayList<>();
+        for (String l : available) {
+            availableLower.add(l.toLowerCase());
+        }
+
+        if (!availableLower.contains(newLang)) {
+            return false;
+        }
+
+        // Update config
+        plugin.getConfig().set("language", newLang);
+        plugin.saveConfig();
+
+        // Reload messages and config cache
+        plugin.getManagerConfig().reload();
+        loadLanguage();
+
+        return true;
+    }
+
+    public String getCurrentLanguage() {
+        return currentLanguage;
     }
 
     public String getMessage(String key, Object... args) {
@@ -80,12 +170,12 @@ public class LanguageManager {
             message = MessageFormat.format(message, args);
         }
 
-        return ChatColor.translateAlternateColorCodes('&', prefix + message);
+        return TextUtil.formatToLegacy(prefix + message);
     }
 
     public String getMessage(Player player, String key, Object... args) {
         String msg = getMessage(key, args);
-        if (player != null && Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+        if (player != null && hasPAPI) {
             msg = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, msg);
         }
         return msg;
@@ -95,22 +185,61 @@ public class LanguageManager {
         String message = languageConfig.getString(key);
 
         if (message == null) {
-            return ChatColor.RED + "Missing message: " + key;
+            return TextUtil.formatToLegacy("&cMissing message: " + key);
         }
 
         if (args.length > 0) {
             message = MessageFormat.format(message, args);
         }
 
-        return ChatColor.translateAlternateColorCodes('&', message);
+        return TextUtil.formatToLegacy(message);
     }
 
     public String getMessageUnprefixed(Player player, String key, Object... args) {
         String msg = getMessageUnprefixed(key, args);
-        if (player != null && Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+        if (player != null && hasPAPI) {
             msg = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, msg);
         }
         return msg;
+    }
+
+    public net.kyori.adventure.text.Component getMessageComponent(Player player, String key, Object... args) {
+        String message = languageConfig.getString(key);
+        String prefix = plugin.getManagerConfig().prefix;
+
+        if (message == null) {
+            return net.kyori.adventure.text.Component.text(getFallbackMessage(key));
+        }
+
+        if (args.length > 0) {
+            message = MessageFormat.format(message, args);
+        }
+
+        String fullMessage = prefix + message;
+
+        if (player != null && hasPAPI) {
+            fullMessage = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, fullMessage);
+        }
+
+        return TextUtil.format(fullMessage);
+    }
+
+    public net.kyori.adventure.text.Component getMessageComponentUnprefixed(Player player, String key, Object... args) {
+        String message = languageConfig.getString(key);
+
+        if (message == null) {
+            return TextUtil.format("&cMissing message: " + key);
+        }
+
+        if (args.length > 0) {
+            message = MessageFormat.format(message, args);
+        }
+
+        if (player != null && hasPAPI) {
+            message = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, message);
+        }
+
+        return TextUtil.format(message);
     }
 
     private String saveResourceIfNotExists(String resourcePath) {
@@ -122,31 +251,43 @@ public class LanguageManager {
     }
 
     private String getFallbackMessage(String key) {
+        String message;
         switch (key) {
             case "cooldown-active":
-                return ChatColor.translateAlternateColorCodes('&', "&cYou must wait {0} seconds.");
+                message = "&cYou must wait {0} seconds.";
+                break;
             case "teleporting-in":
-                return ChatColor.translateAlternateColorCodes('&', "&aTeleporting in {0} seconds... Don't move!");
+                message = "&aTeleporting in {0} seconds... Don't move!";
+                break;
             case "proxy-connecting":
-                return ChatColor.translateAlternateColorCodes('&', "&aSending you to the &e{0} &aserver...");
+                message = "&aSending you to the &e{0} &aserver...";
+                break;
             case "proxy-hub-message":
-                return ChatColor.translateAlternateColorCodes('&', "&aReturning to the &eMain Hub&a...");
+                message = "&aReturning to the &eMain Hub&a...";
+                break;
             case "proxy-lobby-message":
-                return ChatColor.translateAlternateColorCodes('&', "&aGoing back to the &eLobby&a...");
+                message = "&aGoing back to the &eLobby&a...";
+                break;
             case "not-enough-money":
-                return ChatColor.translateAlternateColorCodes('&', "&cYou need at least &e${0} &cto teleport!");
+                message = "&cYou need at least &e${0} &cto teleport!";
+                break;
             case "teleport-cost":
-                return ChatColor.translateAlternateColorCodes('&', "&aYou have paid &e${0} &afor teleporting.");
+                message = "&aYou have paid &e${0} &afor teleporting.";
+                break;
             case "combat-active":
-                return ChatColor.translateAlternateColorCodes('&', "&cYou cannot teleport while in combat!");
+                message = "&cYou cannot teleport while in combat!";
+                break;
             case "falling-active":
-                return ChatColor.translateAlternateColorCodes('&', "&cYou cannot teleport while falling!");
+                message = "&cYou cannot teleport while falling!";
+                break;
             case "spawn-firstjoin-set":
-                return ChatColor.translateAlternateColorCodes('&', "&aFirst-Join spawn successfully set!");
+                message = "&aFirst-Join spawn successfully set!";
+                break;
             default:
                 plugin.getLogger().warning("Missing language key: " + key);
-                return ChatColor.RED + "Missing message: " + key;
+                message = "&cMissing message: " + key;
+                break;
         }
+        return TextUtil.formatToLegacy(message);
     }
 }
-

@@ -53,8 +53,14 @@ public class BackCommand implements CommandExecutor {
 
         // Teleport and clear the saved location (one-use)
         backManager.clearLocation(player);
-        SchedulerUtil.teleport(player, backLocation);
-        player.sendMessage(languageManager.getMessage("back-teleport"));
+        SchedulerUtil.teleport(plugin, player, backLocation, () -> {
+            player.sendMessage(languageManager.getMessage("back-teleport"));
+            plugin.getSpawnManager().playSpawnSound(player, backLocation);
+            if (plugin.getManagerConfig().protectionEnabled) {
+                int time = plugin.getManagerConfig().protectionTime;
+                player.setMetadata("xsetspawn_protection", new org.bukkit.metadata.FixedMetadataValue(plugin, System.currentTimeMillis() + (time * 1000L)));
+            }
+        });
 
         return true;
     }

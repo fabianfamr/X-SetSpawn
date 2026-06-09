@@ -30,6 +30,7 @@ help-delspawn: "&8» &b/delspawn &7- Удалить спавн"
 help-back: "&8» &b/back &7- Вернуться на предыдущее место"
 help-reload: "&8» &b/xss reload &7- Перезагрузить конфигурацию"
 help-help: "&8» &b/xss help &7- Показать это меню"
+help-locate: "&8» &b/xss locate &7- Просмотр доступных языков"
 help-version: "&8» &b/xss version &7- Посмотреть версию плагина"
 help-update: "&8» &b/xss update &7- Проверить наличие обновлений"
 
@@ -100,3 +101,10 @@ version-footer: "&8&m---------------------------------"
 plugin-enabled: "&aX-SetSpawn v{0} успешно включен."
 plugin-disabled: "&cX-SetSpawn v{0} выключен."
 config-reloaded: "&aКонфигурация успешно перезагружена."
+
+# ============================================
+#              Locate / Language
+# ============================================
+locate-usage: "&7Использование: &f/xss locate <язык>&7 для мгновенной смены"
+locate-not-found: "&cФайл языка &e{0}.yml&c не найден в messages/."
+locate-changed: "&aЯзык изменен на &e{0}&a. Конфигурация перезагружена."

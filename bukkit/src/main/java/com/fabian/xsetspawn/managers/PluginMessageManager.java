@@ -24,7 +24,7 @@ public class PluginMessageManager implements PluginMessageListener {
 
     @Override
     public void onPluginMessageReceived(String channel, Player player, byte[] message) {
-        if (!channel.equals(CHANNEL) || message == null || message.length == 0) return;
+        if (!channel.equals(CHANNEL) || message == null || message.length < 2) return;
 
         try {
             ByteArrayDataInput in = ByteStreams.newDataInput(message);
@@ -51,10 +51,10 @@ public class PluginMessageManager implements PluginMessageListener {
                     if (spawnLocation != null) {
                         final Location finalLoc = spawnLocation;
                         boolean silent = false;
-                        try { silent = in.readBoolean(); } catch (Exception ignored) {} 
+                        try { silent = in.readBoolean(); } catch (IllegalStateException ignored) {} catch (Exception ignored) {}
                         
                         boolean finalSilent = silent;
-                        SchedulerUtil.runRegion(plugin, finalLoc, () -> {
+                        SchedulerUtil.runEntity(plugin, target, () -> {
                             plugin.getBackManager().saveLocation(target);
                             SchedulerUtil.teleport(plugin, target, finalLoc, () -> {
                                 plugin.getSpawnManager().playSpawnSound(target, finalLoc);
@@ -87,15 +87,15 @@ public class PluginMessageManager implements PluginMessageListener {
                 float yaw = in.readFloat();
                 float pitch = in.readFloat();
                 boolean silent = false;
-                try { silent = in.readBoolean(); } catch (Exception ignored) {} // Support old versions
+                try { silent = in.readBoolean(); } catch (IllegalStateException ignored) {} catch (Exception ignored) {} // Support old versions
 
                 org.bukkit.World world = Bukkit.getWorld(worldName);
                 if (world != null) {
                     Location loc = new Location(world, x, y, z, yaw, pitch);
                     
-                    // Teleport immediately (SchedulerUtil.runRegion ensures Folia compatibility)
+                    // Teleport immediately (SchedulerUtil.runEntity ensures Folia compatibility)
                     boolean finalSilent = silent;
-                    SchedulerUtil.runRegion(plugin, loc, () -> {
+                    SchedulerUtil.runEntity(plugin, player, () -> {
                         if (player.isOnline()) {
                             if (plugin.getManagerConfig().debugEnabled) {
                                 plugin.log("Received GlobalLobbyTeleport for " + player.getName() + " to " + worldName + " (" + (int)x + ", " + (int)y + ", " + (int)z + ") [Silent: " + finalSilent + "]");

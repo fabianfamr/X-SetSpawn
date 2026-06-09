@@ -22,7 +22,9 @@ public enum Permission {
     BYPASS_DELAY("bypass.delay"),
     BYPASS_ECONOMY("bypass.economy"),
     BACK("back"),
-    DELSPAWN("delspawn");
+    DELSPAWN("delspawn"),
+    LOCATE("locate"),
+    SPAWN_ON_JOIN("spawn-on-join");
 
     private final String node;
 

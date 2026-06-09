@@ -13,12 +13,22 @@ import org.bukkit.inventory.meta.FireworkMeta;
 public class VisualUtil {
 
     private static boolean useReflectionForTitles = false;
+    private static boolean nmsAvailable = false;
 
     static {
         try {
             Player.class.getMethod("sendTitle", String.class, String.class, int.class, int.class, int.class);
         } catch (NoSuchMethodException e) {
             useReflectionForTitles = true;
+            // Check if NMS versioned packages are available (pre-1.17 only)
+            try {
+                String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
+                Class.forName("net.minecraft.server." + version + ".IChatBaseComponent");
+                nmsAvailable = true;
+            } catch (Exception ignored) {
+                // 1.17+ or non-standard server — NMS reflection won't work
+                nmsAvailable = false;
+            }
         }
     }
 
@@ -43,7 +53,10 @@ public class VisualUtil {
         }
 
         if (useReflectionForTitles) {
-            sendTitleReflection(player, title, subtitle, fadeIn, stay, fadeOut);
+            if (nmsAvailable) {
+                sendTitleReflection(player, title, subtitle, fadeIn, stay, fadeOut);
+            }
+            // If NMS is not available (1.17+), titles are simply unsupported on this fork
         }
     }
 

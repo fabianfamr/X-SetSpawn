@@ -1,13 +1,10 @@
 # ============================================
-#      X-SetSpawn - Custom Language
+#        X-SetSpawn - English Language
 # ============================================
-# Personaliza los mensajes del plugin aquí
-# Usa {0}, {1}, etc. para placeholders dinámicos
-# Usa códigos de color de Minecraft: &a, &c, &e, etc.
 
-prefix: "&8[&bX-SetSpawn&8]&r "
-
-# Commands
+# ============================================
+#               Comandos
+# ============================================
 spawn-set: "&aSpawn successfully set!"
 spawn-set-world: "&aSpawn set for world &e{0}&a."
 spawn-set-named: "&aSpawn &e{0}&a has been set successfully!"
@@ -27,7 +24,9 @@ delspawn-usage: "&cUsage: /xss delspawn <name>"
 back-teleport: "&aTeleported back to your previous location."
 back-no-location: "&cYou have no previous location saved (or it has expired)."
 
-# Help
+# ============================================
+#                  Ayuda
+# ============================================
 help-header: "&8&m      &b [ &3X-SetSpawn Help &b] &8&m      "
 help-spawn: "&8» &b/spawn &7- Teleport to spawn"
 help-setspawn: "&8» &b/setspawn &7- Set global spawn"
@@ -35,6 +34,7 @@ help-delspawn: "&8» &b/delspawn &7- Delete a specific spawn"
 help-back: "&8» &b/back &7- Return to your last location"
 help-reload: "&8» &b/xss reload &7- Reload configuration"
 help-help: "&8» &b/xss help &7- Show this help menu"
+help-locate: "&8» &b/xss locate &7- View available languages"
 help-version: "&8» &b/xss version &7- View plugin version"
 help-update: "&8» &b/xss update &7- Check for updates"
 
@@ -105,3 +105,10 @@ version-footer: "&8&m---------------------------------"
 plugin-enabled: "&aX-SetSpawn v{0} enabled successfully."
 plugin-disabled: "&cX-SetSpawn v{0} disabled."
 config-reloaded: "&aConfiguration reloaded successfully."
+
+# ============================================
+#              Locate / Language
+# ============================================
+locate-usage: "&7Usage: &f/xss locate <language>&7 to change instantly"
+locate-not-found: "&cLanguage file &e{0}.yml&c not found in messages/."
+locate-changed: "&aLanguage changed to &e{0}&a. Configuration reloaded."

@@ -2,6 +2,7 @@ package com.fabian.xsetspawn.listeners;
 
 import com.fabian.xsetspawn.XSetSpawn;
 import com.fabian.xsetspawn.managers.ManagerConfig;
+import com.fabian.xsetspawn.managers.Permission;
 import com.fabian.xsetspawn.managers.SpawnManager;
 import com.fabian.xsetspawn.utils.SchedulerUtil;
 import org.bukkit.Location;
@@ -27,17 +28,29 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onFirstJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
+        boolean teleported = false;
+
         if (config.teleportOnFirstJoin && !player.hasPlayedBefore()) {
             if (config.firstJoinSpawnEnabled) {
                 Location firstJoin = spawnManager.getFirstJoinSpawn();
                 if (firstJoin != null) {
                     SchedulerUtil.teleport(player, firstJoin);
-                    plugin.getSpawnManager().playSpawnSound(player, firstJoin);
                     applyProtection(player);
-                    return;
+                    teleported = true;
                 }
             }
-            teleportToSpawn(player);
+            if (!teleported) {
+                teleportToSpawn(player, false);
+                teleported = true;
+            }
+        }
+
+        if (!teleported && config.teleportOnJoinPermission) {
+            SchedulerUtil.runRegionDelayed(plugin, player.getLocation(), () -> {
+                if (player.isOnline() && Permission.SPAWN_ON_JOIN.has(player)) {
+                    teleportToSpawn(player, false);
+                }
+            }, 2L);
         }
 
         // Notify Proxy that the player is ready/connected (for instant teleport sync)
@@ -68,13 +81,15 @@ public class PlayerListener implements Listener {
         }
     }
 
-    private void teleportToSpawn(Player player) {
+    private void teleportToSpawn(Player player, boolean playSound) {
         World world = player.getWorld();
         if (spawnManager.isSpawnSet(world)) {
             Location spawn = spawnManager.getSpawn(world);
             if (spawn != null) {
                 SchedulerUtil.teleport(player, spawn);
-                plugin.getSpawnManager().playSpawnSound(player, spawn);
+                if (playSound) {
+                    plugin.getSpawnManager().playSpawnSound(player, spawn);
+                }
                 applyProtection(player);
             }
         }
@@ -84,25 +99,6 @@ public class PlayerListener implements Listener {
         if (config.protectionEnabled) {
             int time = config.protectionTime;
             player.setMetadata("xsetspawn_protection", new org.bukkit.metadata.FixedMetadataValue(plugin, System.currentTimeMillis() + (time * 1000L)));
-        }
-    }
-
-    @EventHandler
-    public void onPlayerMove(org.bukkit.event.player.PlayerMoveEvent event) {
-        if (!config.voidTeleportEnabled) return;
-        
-        Player player = event.getPlayer();
-        int voidY = config.voidTeleportHeight;
-        
-        if (player.getLocation().getY() < voidY) {
-            World world = player.getWorld();
-            Location spawn = spawnManager.getSpawn(world);
-            if (spawn != null) {
-                player.setFallDistance(0);
-                SchedulerUtil.teleport(player, spawn);
-                plugin.getSpawnManager().playSpawnSound(player, spawn);
-                applyProtection(player);
-            }
         }
     }
 
@@ -121,5 +117,14 @@ public class PlayerListener implements Listener {
             }
         }
     }
+
+    @EventHandler
+    public void onPlayerQuit(org.bukkit.event.player.PlayerQuitEvent event) {
+        java.util.UUID uuid = event.getPlayer().getUniqueId();
+        plugin.getDelayManager().cancelTeleport(event.getPlayer());
+        plugin.getBackManager().clearLocation(uuid);
+        plugin.getCooldownManager().removeCooldown(uuid);
+    }
 }
+
 

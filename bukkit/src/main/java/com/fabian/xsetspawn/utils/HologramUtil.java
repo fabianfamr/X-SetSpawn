@@ -48,5 +48,17 @@ public class HologramUtil {
             armorStand.remove();
         }
     }
+
+    /**
+     * Removes ALL active holograms. Called on plugin disable/reload to prevent orphaned ArmorStands.
+     */
+    public static void removeAll() {
+        for (ArmorStand armorStand : activeHolograms.values()) {
+            if (armorStand != null && armorStand.isValid()) {
+                armorStand.remove();
+            }
+        }
+        activeHolograms.clear();
+    }
 }
 

@@ -21,6 +21,10 @@ public class SchedulerUtil {
     private static Method regionRunDelayedMethod;
     private static Method regionRunMethod;
 
+    private static Method entityGetSchedulerMethod;
+    private static Method entityRunTimerMethod;
+    private static Method entityRunMethod;
+
     private static Method teleportAsyncMethod;
 
     static {
@@ -48,6 +52,14 @@ public class SchedulerUtil {
             } catch (Exception e) {
                 // Not found, will fall back to sync teleport
             }
+
+            // EntityScheduler
+            try {
+                entityGetSchedulerMethod = Class.forName("org.bukkit.entity.Entity").getMethod("getScheduler");
+                Class<?> entitySchedulerClass = Class.forName("io.papermc.paper.threadedregions.scheduler.EntityScheduler");
+                entityRunTimerMethod = entitySchedulerClass.getMethod("runAtFixedRate", Plugin.class, Consumer.class, Runnable.class, long.class, long.class);
+                entityRunMethod = entitySchedulerClass.getMethod("run", Plugin.class, Consumer.class, Runnable.class);
+            } catch (Exception e) {}
             
         } catch (Exception ignored) {
             isFolia = false;
@@ -90,6 +102,16 @@ public class SchedulerUtil {
         }
     }
 
+    public static void runAsync(Plugin plugin, Runnable task) {
+        if (isFolia) {
+            // In Folia, Bukkit.getScheduler().runTaskAsynchronously is unsupported.
+            // Using CompletableFuture is safe and native for off-thread DB operations.
+            java.util.concurrent.CompletableFuture.runAsync(task);
+        } else {
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, task);
+        }
+    }
+
     public static TaskWrapper runAsyncDelayed(Plugin plugin, Runnable task, long delayTicks) {
         if (isFolia) {
             try {
@@ -122,6 +144,38 @@ public class SchedulerUtil {
             return bukkitTask::cancel;
         }
         return () -> {};
+    }
+
+    public static TaskWrapper runEntityTimer(Plugin plugin, org.bukkit.entity.Entity entity, Runnable task, long delayTicks, long periodTicks) {
+        if (isFolia && entityRunTimerMethod != null) {
+            try {
+                Object entityScheduler = entityGetSchedulerMethod.invoke(entity);
+                long initialDelay = Math.max(1, delayTicks);
+                Consumer<?> consumer = (scheduledTask) -> task.run();
+                Object scheduledTaskObj = entityRunTimerMethod.invoke(entityScheduler, plugin, consumer, null, initialDelay, periodTicks);
+                return createWrapper(scheduledTaskObj);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            BukkitTask bukkitTask = Bukkit.getScheduler().runTaskTimer(plugin, task, delayTicks, periodTicks);
+            return bukkitTask::cancel;
+        }
+        return () -> {};
+    }
+
+    public static void runEntity(Plugin plugin, org.bukkit.entity.Entity entity, Runnable task) {
+        if (isFolia && entityRunMethod != null) {
+            try {
+                Object entityScheduler = entityGetSchedulerMethod.invoke(entity);
+                Consumer<?> consumer = (scheduledTask) -> task.run();
+                entityRunMethod.invoke(entityScheduler, plugin, consumer, null);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            Bukkit.getScheduler().runTask(plugin, task);
+        }
     }
 
     public static TaskWrapper runRegionDelayed(Plugin plugin, Location location, Runnable task, long delayTicks) {

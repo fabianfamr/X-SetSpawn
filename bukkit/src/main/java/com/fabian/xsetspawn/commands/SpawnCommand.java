@@ -10,6 +10,7 @@ import com.fabian.xsetspawn.managers.SpawnManager;
 import com.fabian.xsetspawn.hooks.VaultHook;
 import com.fabian.xsetspawn.hooks.CombatHook;
 import com.fabian.xsetspawn.utils.SchedulerUtil;
+import com.fabian.xsetspawn.utils.TextUtil;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
@@ -138,6 +139,15 @@ public class SpawnCommand implements CommandExecutor, TabCompleter {
             SchedulerUtil.teleport(this.plugin, player, finalLocation, () -> {
                 spawnManager.playSpawnSound(player, finalLocation);
                 player.sendMessage(finalMessage);
+
+                // Charge economy after successful instant teleport
+                if (config.economyEnabled && vault.isSetup() && !Permission.BYPASS_ECONOMY.has(player)) {
+                    double cost = config.economyCost;
+                    vault.withdrawPlayer(player, cost);
+                    if (cost > 0) {
+                        player.sendMessage(languageManager.getMessage("teleport-cost", vault.format(cost)));
+                    }
+                }
                 
                 // Apply cooldown after successful instant teleport
                 if (config.cooldownEnabled && !Permission.BYPASS_COOLDOWN.has(player)) {

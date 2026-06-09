@@ -22,15 +22,39 @@ import java.util.List;
  */
 public class CombatHook {
 
+    private enum CombatPlugin { COMBATLOGX, PVPMANAGER, METADATA_ONLY, NONE }
+
+    private static CombatPlugin detectedPlugin = null;
+
     /**
-     * Checks if a player is currently in combat by querying known metadata keys
-     * and reflection-based API access for popular combat plugins.
+     * Detects which combat plugin is present (cached on first call).
+     */
+    private static CombatPlugin detectPlugin() {
+        if (detectedPlugin != null) return detectedPlugin;
+
+        if (isPluginEnabled("CombatLogX")) {
+            detectedPlugin = CombatPlugin.COMBATLOGX;
+        } else if (isPluginEnabled("PvPManager")) {
+            detectedPlugin = CombatPlugin.PVPMANAGER;
+        } else if (isPluginEnabled("DeluxeCombat")) {
+            detectedPlugin = CombatPlugin.METADATA_ONLY;
+        } else {
+            // Check for any generic combat plugin via common metadata
+            detectedPlugin = CombatPlugin.METADATA_ONLY;
+        }
+        return detectedPlugin;
+    }
+
+    /**
+     * Checks if a player is currently in combat by querying the detected combat plugin.
      *
      * @param player The player to check.
      * @return true if in combat, false otherwise.
      */
     public static boolean isInCombat(Player player) {
-        // Strategy 1: Check common metadata keys used by combat plugins
+        CombatPlugin plugin = detectPlugin();
+
+        // Always check common metadata keys (cheap operation)
         if (hasMetadataFlag(player, "in_combat")
                 || hasMetadataFlag(player, "CombatTag")
                 || hasMetadataFlag(player, "CombatTagged")
@@ -40,17 +64,12 @@ public class CombatHook {
             return true;
         }
 
-        // Strategy 2: Try CombatLogX via reflection
-        if (isPluginEnabled("CombatLogX") && checkCombatLogX(player)) {
-            return true;
+        // Only use reflection for the detected plugin
+        switch (plugin) {
+            case COMBATLOGX: return checkCombatLogX(player);
+            case PVPMANAGER: return checkPvPManager(player);
+            default: return false;
         }
-
-        // Strategy 3: Try PvPManager via reflection
-        if (isPluginEnabled("PvPManager") && checkPvPManager(player)) {
-            return true;
-        }
-
-        return false;
     }
 
     private static boolean hasMetadataFlag(Player player, String key) {

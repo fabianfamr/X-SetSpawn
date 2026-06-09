@@ -65,31 +65,17 @@ public class SetSpawnCommand implements CommandExecutor, TabCompleter {
         }
 
         // --- Smart Parsing ---
-        // Case 1: /setspawn <name>  (1 arg, not numeric) — Named Spawn at player location
-        if (args.length == 1 && !isNumericOrTilde(args[0])) {
-            if (!(sender instanceof Player)) {
-                sender.sendMessage("§cPlayers only can set a named spawn without coordinates.");
-                return true;
-            }
-            if (!config.namedSpawns) {
-                sender.sendMessage(languageManager.getMessage("named-spawns-disabled"));
-                return true;
-            }
-            Player player = (Player) sender;
-            String name = args[0].toLowerCase();
-            spawnManager.setNamedSpawn(name, player.getLocation());
-            sendSetSpawnMessage(player, player.getWorld(), name);
-            return true;
-        }
-
-        // Case 2: /setspawn <x> <y> <z> [world] [yaw] [pitch] — Default spawn at coordinates
-        if (args.length >= 3 && isNumericOrTilde(args[0]) && isNumericOrTilde(args[1]) && isNumericOrTilde(args[2])) {
+        
+        // Case 1: Try /setspawn <x> <y> <z> [world] [yaw] [pitch] — Default spawn at coordinates
+        if (args.length >= 3) {
             try {
+                // If this fails, it's either a named spawn or invalid usage
                 double x = parseCoord(sender, args[0], "X");
                 double y = parseCoord(sender, args[1], "Y");
                 double z = parseCoord(sender, args[2], "Z");
 
                 World world = null;
+                // If arg[3] is not a number, it's likely a world name
                 if (args.length >= 4 && !isNumericOrTilde(args[3])) {
                     world = Bukkit.getWorld(args[3]);
                     if (world == null) {
@@ -108,27 +94,46 @@ public class SetSpawnCommand implements CommandExecutor, TabCompleter {
                 float yaw = 0;
                 float pitch = 0;
                 if (args.length >= 5 && isNumericOrTilde(args[4])) yaw = Float.parseFloat(args[4]);
+                if (args.length >= 6 && isNumericOrTilde(args[5])) pitch = Float.parseFloat(args[5]);
+                
                 spawnManager.setSpawn(world, x, y, z, yaw, pitch);
                 sendSetSpawnMessage(sender, world, null);
                 return true;
 
-            } catch (NumberFormatException e) {
-                sender.sendMessage("§cInvalid coordinates or rotation values!");
-                return true;
+            } catch (NumberFormatException ignored) {
+                // Not a default coordinate-based spawn, fall through to named spawns
             }
         }
 
-        // Case 3: /setspawn <name> <x> <y> <z> [world] [yaw] [pitch] — Named Spawn at coordinates
-        if (args.length >= 4 && !isNumericOrTilde(args[0]) && isNumericOrTilde(args[1]) && isNumericOrTilde(args[2]) && isNumericOrTilde(args[3])) {
+        // Case 2: /setspawn <name>  (1 arg, not numeric) — Named Spawn at player location
+        if (args.length == 1) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("§cPlayers only can set a named spawn without coordinates.");
+                return true;
+            }
             if (!config.namedSpawns) {
                 sender.sendMessage(languageManager.getMessage("named-spawns-disabled"));
                 return true;
             }
+            Player player = (Player) sender;
+            String name = args[0].toLowerCase();
+            spawnManager.setNamedSpawn(name, player.getLocation());
+            sendSetSpawnMessage(player, player.getWorld(), name);
+            return true;
+        }
+
+        // Case 3: /setspawn <name> <x> <y> <z> [world] [yaw] [pitch] — Named Spawn at coordinates
+        if (args.length >= 4) {
             try {
                 String name = args[0].toLowerCase();
                 double x = parseCoord(sender, args[1], "X");
                 double y = parseCoord(sender, args[2], "Y");
                 double z = parseCoord(sender, args[3], "Z");
+
+                if (!config.namedSpawns) {
+                    sender.sendMessage(languageManager.getMessage("named-spawns-disabled"));
+                    return true;
+                }
 
                 World world = null;
                 if (args.length >= 5 && !isNumericOrTilde(args[4])) {
@@ -149,13 +154,13 @@ public class SetSpawnCommand implements CommandExecutor, TabCompleter {
                 float yaw = 0;
                 float pitch = 0;
                 if (args.length >= 6 && isNumericOrTilde(args[5])) yaw = Float.parseFloat(args[5]);
+                
                 spawnManager.setNamedSpawn(name, world, x, y, z, yaw, pitch);
                 sendSetSpawnMessage(sender, world, name);
                 return true;
 
-            } catch (NumberFormatException e) {
-                sender.sendMessage("§cInvalid coordinates or rotation values!");
-                return true;
+            } catch (NumberFormatException ignored) {
+                // Not a named coordinate-based spawn
             }
         }
 

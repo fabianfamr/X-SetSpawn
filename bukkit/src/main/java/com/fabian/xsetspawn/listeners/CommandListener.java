@@ -8,7 +8,7 @@ import java.util.Collection;
 
 public class CommandListener implements Listener {
 
-    public CommandListener(XSetSpawn plugin) {
+    public CommandListener() {
     }
 
     /**

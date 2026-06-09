@@ -1,13 +1,13 @@
 package com.fabian.xsetspawn.logic;
 
 import org.bukkit.entity.Player;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CooldownManager {
 
-    private final Map<UUID, Long> cooldowns = new HashMap<>();
+    private final Map<UUID, Long> cooldowns = new ConcurrentHashMap<>();
 
     public void setCooldown(Player player, int seconds) {
         long expireTime = System.currentTimeMillis() + (seconds * 1000L);
@@ -30,5 +30,10 @@ public class CooldownManager {
     public void removeCooldown(Player player) {
         cooldowns.remove(player.getUniqueId());
     }
+
+    public void removeCooldown(UUID uuid) {
+        cooldowns.remove(uuid);
+    }
 }
+
 

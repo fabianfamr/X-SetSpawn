@@ -89,18 +89,29 @@ public class UpdateChecker {
     }
 
     private boolean isNewer(String current, String latest) {
-        String[] currentParts = current.replace("v", "").split("\\.");
-        String[] latestParts = latest.replace("v", "").split("\\.");
-        int length = Math.max(currentParts.length, latestParts.length);
-        for (int i = 0; i < length; i++) {
-            int currentPart = i < currentParts.length ? Integer.parseInt(currentParts[i]) : 0;
-            int latestPart = i < latestParts.length ? Integer.parseInt(latestParts[i]) : 0;
-            if (latestPart > currentPart)
-                return true;
-            if (latestPart < currentPart)
-                return false;
+        try {
+            String[] currentParts = current.replace("v", "").split("[\\.-]");
+            String[] latestParts = latest.replace("v", "").split("[\\.-]");
+            int length = Math.max(currentParts.length, latestParts.length);
+            for (int i = 0; i < length; i++) {
+                int currentPart = i < currentParts.length ? parseVersionPart(currentParts[i]) : 0;
+                int latestPart = i < latestParts.length ? parseVersionPart(latestParts[i]) : 0;
+                if (latestPart > currentPart)
+                    return true;
+                if (latestPart < currentPart)
+                    return false;
+            }
+        } catch (Exception ignored) {
         }
         return false;
+    }
+
+    private int parseVersionPart(String part) {
+        try {
+            return Integer.parseInt(part);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 }
 

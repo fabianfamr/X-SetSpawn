@@ -29,11 +29,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.UUID;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ArrayList;
 
 /**
  * X-SetSpawn Velocity Plugin
@@ -43,7 +38,7 @@ import java.util.ArrayList;
 @Plugin(
     id = "x-setspawn",
     name = "X-SetSpawn",
-    version = "2.0",
+    version = "2.2",
     description = "Proxy hub/lobby/spawn commands for X-SetSpawn",
     authors = {"Fabian"}
 )
@@ -91,6 +86,7 @@ public class XSetSpawnVelocity {
     // Cooldowns and pending tasks
     private final Map<UUID, Long> cooldowns = new HashMap<>();
     private final Map<UUID, ScheduledTask> pendingTeleports = new HashMap<>();
+    private final Map<UUID, Long> lastGlobalTeleport = new HashMap<>();
 
     @Inject
     public XSetSpawnVelocity(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory, Metrics.Factory metricsFactory) {
@@ -126,7 +122,7 @@ public class XSetSpawnVelocity {
         }
 
         server.getConsoleCommandSource().sendMessage(LEGACY.deserialize("&b----------------------------------------------"));
-        server.getConsoleCommandSource().sendMessage(LEGACY.deserialize("  &3X-SetSpawn &bv2.0 &aenabled! Enjoy spawning!"));
+        server.getConsoleCommandSource().sendMessage(LEGACY.deserialize("  &3X-SetSpawn &bv2.1 &aenabled! Enjoy spawning!"));
         server.getConsoleCommandSource().sendMessage(LEGACY.deserialize("  &fLanguage: &e" + language + " &f| Lobby: &e" + targetServer));
         server.getConsoleCommandSource().sendMessage(LEGACY.deserialize("  &fCommands: &e" + aliases + " &fand &b/setlobby"));
         server.getConsoleCommandSource().sendMessage(LEGACY.deserialize("&b----------------------------------------------"));
@@ -210,6 +206,11 @@ public class XSetSpawnVelocity {
                 boolean isJoin = (event.getPreviousServer() == null);
                 int delay = isJoin ? joinTeleportDelay : switchTeleportDelay;
 
+                ScheduledTask oldTask = pendingTeleports.remove(player.getUniqueId());
+                if (oldTask != null) {
+                    oldTask.cancel();
+                }
+
                 // Use configured delay as fallback (if Bukkit doesn't send PlayerReady)
                 ScheduledTask task = server.getScheduler().buildTask(this, () -> {
                     pendingTeleports.remove(player.getUniqueId());
@@ -221,9 +222,31 @@ public class XSetSpawnVelocity {
         });
     }
 
+    @Subscribe
+    public void onPlayerDisconnect(com.velocitypowered.api.event.connection.DisconnectEvent event) {
+        UUID uuid = event.getPlayer().getUniqueId();
+        ScheduledTask task = pendingTeleports.remove(uuid);
+        if (task != null) {
+            task.cancel();
+        }
+        cooldowns.remove(uuid);
+        lastGlobalTeleport.remove(uuid);
+    }
+
     private void sendGlobalLobbyTeleport(Player player, boolean silent) {
         if (!lobbyCoordsSet || lobbyWorld == null) return;
         
+        // Anti-Double-Teleport Lock (500ms)
+        long now = System.currentTimeMillis();
+        long last = lastGlobalTeleport.getOrDefault(player.getUniqueId(), 0L);
+        if (now - last < 500) {
+            if (debugEnabled) {
+                logger.info("Ignored redundant GlobalLobbyTeleport for {} (Last was {}ms ago)", player.getUsername(), (now - last));
+            }
+            return;
+        }
+        lastGlobalTeleport.put(player.getUniqueId(), now);
+
         player.getCurrentServer().ifPresent(serverConn -> {
             if (debugEnabled) {
                 logger.info("Sending GlobalLobbyTeleport for player '{}' (Silent: {})", player.getUsername(), silent);
@@ -244,22 +267,24 @@ public class XSetSpawnVelocity {
     }
 
     private void saveLocationData() {
-        try {
-            Path dataFile = dataDirectory.resolve("data.yml");
-            List<String> lines = new ArrayList<>();
-            lines.add("target-server: \"" + targetServer + "\"");
-            if (lobbyCoordsSet) {
-                lines.add("world: \"" + lobbyWorld + "\"");
-                lines.add("x: " + lobbyX);
-                lines.add("y: " + lobbyY);
-                lines.add("z: " + lobbyZ);
-                lines.add("yaw: " + lobbyYaw);
-                lines.add("pitch: " + lobbyPitch);
+        server.getScheduler().buildTask(this, () -> {
+            try {
+                Path dataFile = dataDirectory.resolve("data.yml");
+                List<String> lines = new ArrayList<>();
+                lines.add("target-server: \"" + targetServer + "\"");
+                if (lobbyCoordsSet) {
+                    lines.add("world: \"" + lobbyWorld + "\"");
+                    lines.add("x: " + lobbyX);
+                    lines.add("y: " + lobbyY);
+                    lines.add("z: " + lobbyZ);
+                    lines.add("yaw: " + lobbyYaw);
+                    lines.add("pitch: " + lobbyPitch);
+                }
+                Files.write(dataFile, lines);
+            } catch (IOException e) {
+                logger.warn("Could not save data.yml: {}", e.getMessage());
             }
-            Files.write(dataFile, lines);
-        } catch (IOException e) {
-            logger.warn("Could not save data.yml: {}", e.getMessage());
-        }
+        }).schedule();
     }
 
     public void updateTargetServer(String newServer) {
@@ -280,7 +305,7 @@ public class XSetSpawnVelocity {
                     if (parts.length < 2) continue;
                     
                     String key = parts[0].trim();
-                    String value = parts[1].trim().replace("\"", "").replace("'", "");
+                    String value = parts[1].trim().replaceAll("[\"']", "");
                     
                     switch (key) {
                         case "target-server": this.targetServer = value; break;
@@ -428,7 +453,7 @@ public class XSetSpawnVelocity {
             if (trimmed.isEmpty() || trimmed.startsWith("#")) continue;
 
             if (trimmed.startsWith("- ") && inAliases) {
-                String value = trimmed.substring(2).trim().replace("\"", "").replace("'", "");
+                String value = trimmed.substring(2).trim().replaceAll("[\"']", "");
                 if (!value.isEmpty()) aliasList.add(value);
                 continue;
             } else if (!trimmed.startsWith("- ")) {
@@ -438,7 +463,7 @@ public class XSetSpawnVelocity {
             if (trimmed.contains(":")) {
                 String[] parts = trimmed.split(":", 2);
                 String key = parts[0].trim();
-                String value = parts.length > 1 ? parts[1].trim().replace("\"", "").replace("'", "") : "";
+                String value = parts.length > 1 ? parts[1].trim().replaceAll("[\"']", "") : "";
 
                 switch (key) {
                     case "cooldown":

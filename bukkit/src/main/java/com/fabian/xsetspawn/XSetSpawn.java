@@ -7,6 +7,7 @@ import com.fabian.xsetspawn.commands.SetSpawnCommand;
 import com.fabian.xsetspawn.commands.SpawnCommand;
 import com.fabian.xsetspawn.listeners.CommandListener;
 import com.fabian.xsetspawn.listeners.PlayerListener;
+import com.fabian.xsetspawn.listeners.VoidTeleportListener;
 import com.fabian.xsetspawn.logic.CooldownManager;
 import com.fabian.xsetspawn.logic.DelayManager;
 import com.fabian.xsetspawn.managers.AliasManager;
@@ -18,7 +19,9 @@ import com.fabian.xsetspawn.managers.SpawnManager;
 import com.fabian.xsetspawn.managers.storage.StorageManager;
 import com.fabian.xsetspawn.managers.BackManager;
 import com.fabian.xsetspawn.managers.PluginMessageManager;
+import com.fabian.xsetspawn.managers.DependencyManager;
 import com.fabian.xsetspawn.hooks.VaultHook;
+import com.fabian.xsetspawn.utils.SchedulerUtil;
 import com.fabian.xsetspawn.utils.UpdateChecker;
 import com.fabian.xsetspawn.metrics.Metrics;
 import org.bukkit.Bukkit;
@@ -28,9 +31,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
-import com.fabian.xsetspawn.utils.SchedulerUtil;
-import net.byteflux.libby.BukkitLibraryManager;
-import net.byteflux.libby.Library;
 
 public class XSetSpawn extends JavaPlugin implements Listener {
 
@@ -47,6 +47,7 @@ public class XSetSpawn extends JavaPlugin implements Listener {
     private Metrics metrics;
     private BackManager backManager;
     private PluginMessageManager pluginMessageManager;
+    private DependencyManager dependencyManager;
 
     @Override
     public void onEnable() {
@@ -63,90 +64,16 @@ public class XSetSpawn extends JavaPlugin implements Listener {
             return;
         }
 
-        String storageType = configManager.getConfig().getString("storage.type", "YAML").toUpperCase();
-
-        // Initialize Libby and download database libraries conditionally based on config
-        try {
-            BukkitLibraryManager libraryManager = new BukkitLibraryManager(this);
-            libraryManager.addMavenCentral();
-            
-            if (storageType.equals("MONGODB") || storageType.equals("MONGO")) {
-                Library bson = Library.builder()
-                        .groupId("org.mongodb")
-                        .artifactId("bson")
-                        .version("4.11.1")
-                        .build();
-                
-                Library bsonRecordCodec = Library.builder()
-                        .groupId("org.mongodb")
-                        .artifactId("bson-record-codec")
-                        .version("4.11.1")
-                        .build();
-                        
-                Library mongoCore = Library.builder()
-                        .groupId("org.mongodb")
-                        .artifactId("mongodb-driver-core")
-                        .version("4.11.1")
-                        .build();
-    
-                Library mongoDb = Library.builder()
-                        .groupId("org.mongodb")
-                        .artifactId("mongodb-driver-sync")
-                        .version("4.11.1")
-                        .build();
-                
-                libraryManager.loadLibrary(bson);
-                libraryManager.loadLibrary(bsonRecordCodec);
-                libraryManager.loadLibrary(mongoCore);
-                libraryManager.loadLibrary(mongoDb);
-            } else if (storageType.equals("SQL") || storageType.equals("MYSQL") || storageType.equals("MARIADB") || storageType.equals("H2")) {
-                Library slf4j = Library.builder()
-                        .groupId("org.slf4j")
-                        .artifactId("slf4j-api")
-                        .version("1.7.32")
-                        .build();
-                
-                Library hikari = Library.builder()
-                        .groupId("com.zaxxer")
-                        .artifactId("HikariCP")
-                        .version("3.4.5") // Java 8 compatible pool
-                        .build();
-                
-                libraryManager.loadLibrary(slf4j);
-                libraryManager.loadLibrary(hikari);
-
-                if (storageType.equals("H2")) {
-                    Library h2 = Library.builder()
-                            .groupId("com.h2database")
-                            .artifactId("h2")
-                            .version("2.2.224")
-                            .build();
-                    libraryManager.loadLibrary(h2);
-                } else if (storageType.equals("MYSQL") || storageType.equals("SQL")) {
-                    Library mysql = Library.builder()
-                            .groupId("mysql")
-                            .artifactId("mysql-connector-java")
-                            .version("8.0.33")
-                            .build();
-                    libraryManager.loadLibrary(mysql);
-                } else if (storageType.equals("MARIADB")) {
-                    Library mariadb = Library.builder()
-                            .groupId("org.mariadb.jdbc")
-                            .artifactId("mariadb-java-client")
-                            .version("3.3.3")
-                            .build();
-                    libraryManager.loadLibrary(mariadb);
-                }
-            }
-        } catch (Exception e) {
-            logError("Failed to load runtime database libraries! " + e.getMessage());
-        }
+        // Initialize and load dependencies
+        this.dependencyManager = new DependencyManager(this);
+        this.dependencyManager.loadDependencies();
 
         // Initialize remaining managers
         try {
             this.storageManager = new StorageManager(this);
             this.languageManager = new LanguageManager(this);
             this.spawnManager = new SpawnManager(this);
+            this.spawnManager.loadCachesAsync();
             this.cooldownManager = new CooldownManager();
             this.delayManager = new DelayManager(this);
             this.vaultHook = new VaultHook(this);
@@ -187,6 +114,9 @@ public class XSetSpawn extends JavaPlugin implements Listener {
         // Register events
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
+        if (managerConfig.voidTeleportEnabled) {
+            getServer().getPluginManager().registerEvents(new VoidTeleportListener(this), this);
+        }
 
         // Register CommandListener manualy if on 1.13+ (where PlayerCommandSendEvent
         // exists)
@@ -195,7 +125,7 @@ public class XSetSpawn extends JavaPlugin implements Listener {
             org.bukkit.event.HandlerList handlers = (org.bukkit.event.HandlerList) eventClass
                     .getMethod("getHandlerList")
                     .invoke(null);
-            CommandListener listener = new CommandListener(this);
+            CommandListener listener = new CommandListener();
 
             handlers.register(new org.bukkit.plugin.RegisteredListener(listener, (l, event) -> {
                 if (eventClass.isInstance(event)) {
@@ -229,6 +159,9 @@ public class XSetSpawn extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        // Clean up any active holograms (ArmorStands) to prevent orphaned entities
+        com.fabian.xsetspawn.utils.HologramUtil.removeAll();
+
         if (metrics != null) {
             metrics.shutdown();
         }
@@ -238,7 +171,11 @@ public class XSetSpawn extends JavaPlugin implements Listener {
         }
 
         Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                "&8[&bX-SetSpawn&8] &cDisabled version " + getDescription().getVersion() + "! Out."));
+                "&8[&bX-SetSpawn&8] &7----------------------------------------------"));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                "&8[&bX-SetSpawn&8]   &cDisabled v" + getDescription().getVersion() + "! Out."));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                "&8[&bX-SetSpawn&8] &7----------------------------------------------"));
     }
 
     @EventHandler

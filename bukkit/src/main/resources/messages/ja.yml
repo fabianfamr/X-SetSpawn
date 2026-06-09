@@ -29,6 +29,7 @@ help-delspawn: "&8» &b/delspawn &7- スポーンを削除"
 help-back: "&8» &b/back &7- 前の場所に戻る"
 help-reload: "&8» &b/xss reload &7- 設定を再読み込み"
 help-help: "&8» &b/xss help &7- このヘルプを表示"
+help-locate: "&8» &b/xss locate &7- 利用可能な言語を表示"
 help-version: "&8» &b/xss version &7- プラグインのバージョンを表示"
 help-update: "&8» &b/xss update &7- アップデートを確認"
 
@@ -101,3 +102,10 @@ version-footer: "&8&m---------------------------------"
 plugin-enabled: "&aX-SetSpawn v{0} が正常に有効になりました。"
 plugin-disabled: "&cX-SetSpawn v{0} が無効になりました。"
 config-reloaded: "&a設定が正常に再読み込みされました。"
+
+# ============================================
+#              Locate / Language
+# ============================================
+locate-usage: "&7使い方: &f/xss locate <言語>&7 で即時変更"
+locate-not-found: "&c言語ファイル &e{0}.yml&c が messages/ に見つかりません。"
+locate-changed: "&a言語を &e{0}&a に変更しました。設定を再読み込みしました。"
