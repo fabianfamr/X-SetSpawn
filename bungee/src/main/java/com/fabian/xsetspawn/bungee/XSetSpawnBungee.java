@@ -19,18 +19,18 @@ import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ServerSwitchEvent;
 import net.md_5.bungee.api.scheduler.ScheduledTask;
 
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * X-SetSpawn BungeeCord Plugin
  * Provides /hub, /lobby, and /spawn commands on the BungeeCord proxy
- * to send players to a configured backend server.
+ * to send players to a configured backend server with multi-lobby random selection.
  */
 public class XSetSpawnBungee extends Plugin implements Listener {
 
@@ -38,17 +38,16 @@ public class XSetSpawnBungee extends Plugin implements Listener {
     public static final String CHANNEL = "xsetspawn:main";
 
     // Expected config-code version. If the user's file has a lower value, it gets rebuilt.
-    private static final int EXPECTED_CONFIG_CODE = 7;
+    private static final int EXPECTED_CONFIG_CODE = 8;
 
     // Config values
-    private String targetServer = "lobby";
-    private Map<String, String> aliasServers = new LinkedHashMap<>();
+    private List<String> lobbyServers = new ArrayList<>(Arrays.asList("lobby"));
+    private List<String> aliases = new ArrayList<>(Arrays.asList("hub", "lobby"));
     private int cooldownSeconds = 3;
     private int joinTeleportDelay = 0;
     private int switchTeleportDelay = 200;
     private boolean debugEnabled = false;
     private boolean showConnectingMessage = true;
-    private boolean connectOnFirstJoin = true;
     private String language = "EN";
 
     // Global Lobby Location (synced from Bukkit)
@@ -58,18 +57,18 @@ public class XSetSpawnBungee extends Plugin implements Listener {
     private boolean lobbyCoordsSet = false;
 
     // Messages (loaded from messages/<lang>.yml)
-    private String prefix = "§8[§bX-SetSpawn§8]§r ";
-    private String msgConnecting = "§aSending you to §e{server}§a...";
-    private String msgCooldown = "§cPlease wait §e{time}s §cbefore using this again.";
-    private String msgServerNotFound = "§cServer '{server}' not found!";
-    private String msgPlayerOnly = "§cThis command can only be used by players.";
-    private String msgAlreadyConnected = "§eYou are already connected to this server!";
-    private String msgLobbySet = "§aGlobal lobby server has been set to: §e{server}";
-    private String msgNoPermission = "§cYou don't have permission to use this command.";
-    private String msgErrorNoServer = "§cError: Could not determine current server.";
-    private String msgConnectionFailed = "§cCould not connect to §e{server}§c. Please try again.";
-    private String msgReloadSuccess = "§aConfiguration and messages reloaded successfully!";
-    private String msgReloadHelp = "§e/xssproxy reload §7- §fReload the plugin configuration and messages";
+    private String prefix = "\u00a78[\u00a7bX-SetSpawn\u00a78]\u00a7r ";
+    private String msgConnecting = "\u00a7aSending you to \u00a7e{server}\u00a7a...";
+    private String msgCooldown = "\u00a7cPlease wait \u00a7e{time}s \u00a7cbefore using this again.";
+    private String msgServerNotFound = "\u00a7cServer '{server}' not found!";
+    private String msgPlayerOnly = "\u00a7cThis command can only be used by players.";
+    private String msgAlreadyConnected = "\u00a7eYou are already connected to this server!";
+    private String msgLobbySet = "\u00a7aGlobal lobby server has been set to: \u00a7e{server}";
+    private String msgNoPermission = "\u00a7cYou don't have permission to use this command.";
+    private String msgErrorNoServer = "\u00a7cError: Could not determine current server.";
+    private String msgConnectionFailed = "\u00a7cCould not connect to \u00a7e{server}\u00a7c. Please try again.";
+    private String msgReloadSuccess = "\u00a7aConfiguration and messages reloaded successfully!";
+    private String msgReloadHelp = "\u00a7e/xssproxy reload \u00a77- \u00a7fReload the plugin configuration and messages";
 
     // Cooldowns and pending tasks
     private final Map<UUID, Long> cooldowns = new java.util.concurrent.ConcurrentHashMap<>();
@@ -94,14 +93,14 @@ public class XSetSpawnBungee extends Plugin implements Listener {
         getProxy().getPluginManager().registerCommand(this, new SetLobbyCommand(this));
         getProxy().getPluginManager().registerCommand(this, new ReloadCommand(this));
 
-        for (Map.Entry<String, String> entry : aliasServers.entrySet()) {
-            getProxy().getPluginManager().registerCommand(this, new HubCommand(this, entry.getKey(), entry.getValue()));
+        for (String alias : aliases) {
+            getProxy().getPluginManager().registerCommand(this, new HubCommand(this, alias));
         }
 
         getLogger().info(translateColors("&b----------------------------------------------"));
         getLogger().info(translateColors("  &3X-SetSpawn &bv" + getDescription().getVersion() + " &aenabled! Enjoy spawning!"));
-        getLogger().info(translateColors("  &fLanguage: &e" + language + " &f| Lobby: &e" + targetServer));
-        getLogger().info(translateColors("  &fCommands: &e" + aliasServers.keySet() + " &fand &b/setlobby, &b/xssproxy"));
+        getLogger().info(translateColors("  &fLanguage: &e" + language + " &f| Lobbies: &e" + lobbyServers));
+        getLogger().info(translateColors("  &fCommands: &e" + aliases + " &fand &b/setlobby, &b/xssproxy"));
         getLogger().info(translateColors("&b----------------------------------------------"));
 
         // Register plugin messaging channel
@@ -123,6 +122,57 @@ public class XSetSpawnBungee extends Plugin implements Listener {
         getLogger().info("X-SetSpawn v" + getDescription().getVersion() + " disabled!");
     }
 
+    // =========================================================================
+    // Multi-Lobby Methods
+    // =========================================================================
+
+    /**
+     * Returns a random lobby server from the configured list.
+     */
+    public String getRandomLobbyServer() {
+        if (lobbyServers.isEmpty()) return null;
+        if (lobbyServers.size() == 1) return lobbyServers.get(0);
+        return lobbyServers.get(ThreadLocalRandom.current().nextInt(lobbyServers.size()));
+    }
+
+    /**
+     * Checks if the given server name is one of the configured lobby servers.
+     */
+    public boolean isLobbyServer(String serverName) {
+        for (String lobby : lobbyServers) {
+            if (lobby.equalsIgnoreCase(serverName)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Gets an unmodifiable view of the lobby servers list.
+     */
+    public List<String> getLobbyServers() {
+        return Collections.unmodifiableList(lobbyServers);
+    }
+
+    /**
+     * Adds a server to the lobby servers list if not already present.
+     * Moves it to the front (primary) position.
+     */
+    public void addLobbyServer(String serverName) {
+        lobbyServers.removeIf(s -> s.equalsIgnoreCase(serverName));
+        lobbyServers.add(0, serverName);
+        saveLocationData();
+    }
+
+    /**
+     * Gets the primary (first) lobby server name.
+     */
+    public String getPrimaryLobby() {
+        return lobbyServers.isEmpty() ? null : lobbyServers.get(0);
+    }
+
+    // =========================================================================
+    // Event Handlers
+    // =========================================================================
+
     @EventHandler
     public void onPluginMessage(PluginMessageEvent event) {
         if (!event.getTag().equals(CHANNEL)) return;
@@ -135,15 +185,15 @@ public class XSetSpawnBungee extends Plugin implements Listener {
 
                 if (subChannel.equals("SetLobbyServer")) {
                     String serverName = server.getInfo().getName();
-                    if (!this.targetServer.equals(serverName)) {
-                        updateTargetServer(serverName);
-                        getLogger().info("Target server dynamically updated to '" + serverName + "' by backend server.");
+                    if (!isLobbyServer(serverName)) {
+                        addLobbyServer(serverName);
+                        getLogger().info("Lobby server dynamically added: '" + serverName + "' by backend server.");
                     }
                 } else if (subChannel.equals("PlayerReady")) {
                     // Backend says player finished loading terrain, send coords immediately
                     if (event.getReceiver() instanceof ProxiedPlayer) {
                         ProxiedPlayer player = (ProxiedPlayer) event.getReceiver();
-                        if (player.getServer() != null && player.getServer().getInfo().getName().equalsIgnoreCase(targetServer)) {
+                        if (player.getServer() != null && isLobbyServer(player.getServer().getInfo().getName())) {
                             
                             // Cancel fallback task if it exists
                             ScheduledTask task = pendingTeleports.remove(player.getUniqueId());
@@ -188,22 +238,10 @@ public class XSetSpawnBungee extends Plugin implements Listener {
         
         String serverName = player.getServer().getInfo().getName();
         
-        // Auto-connect to target server on first join
-        if (event.getFrom() == null && connectOnFirstJoin && !serverName.equalsIgnoreCase(targetServer)) {
-            ServerInfo target = getProxy().getServerInfo(targetServer);
-            if (target != null) {
-                player.connect(target);
-                if (debugEnabled) {
-                    getLogger().info("Auto-connecting " + player.getName() + " to " + targetServer + " on first join.");
-                }
-            }
-            return;
-        }
-        
         if (!lobbyCoordsSet) return;
         
-        // Only trigger if they connected to the global lobby server
-        if (serverName.equalsIgnoreCase(targetServer)) {
+        // Trigger on ANY lobby server
+        if (isLobbyServer(serverName)) {
             // Determine delay: initial join vs server switch
             int delay = (event.getFrom() == null) ? joinTeleportDelay : switchTeleportDelay;
             
@@ -271,7 +309,10 @@ public class XSetSpawnBungee extends Plugin implements Listener {
             try {
                 File dataFile = new File(getDataFolder(), "data.yml");
                 List<String> lines = new ArrayList<>();
-                lines.add("target-server: \"" + targetServer + "\"");
+                lines.add("lobby-servers:");
+                for (String s : lobbyServers) {
+                    lines.add("  - \"" + s + "\"");
+                }
                 if (lobbyCoordsSet) {
                     lines.add("world: \"" + lobbyWorld + "\"");
                     lines.add("x: " + lobbyX);
@@ -287,27 +328,44 @@ public class XSetSpawnBungee extends Plugin implements Listener {
         });
     }
 
-    public void updateTargetServer(String newServer) {
-        this.targetServer = newServer;
-        saveLocationData();
-    }
-
     private void loadData() {
         try {
             File dataFile = new File(getDataFolder(), "data.yml");
             if (dataFile.exists()) {
                 List<String> lines = Files.readAllLines(dataFile.toPath());
+                boolean inLobbyServers = false;
                 for (String line : lines) {
                     String trimmed = line.trim();
-                    if (trimmed.isEmpty()) continue;
+                    if (trimmed.isEmpty() || trimmed.startsWith("#")) continue;
                     String[] parts = trimmed.split(":", 2);
                     if (parts.length < 2) continue;
                     
                     String key = parts[0].trim();
                     String value = parts[1].trim().replaceAll("[\"']", "");
                     
+                    if (key.equals("lobby-servers")) {
+                        inLobbyServers = true;
+                        continue;
+                    }
+                    if (inLobbyServers) {
+                        if (trimmed.startsWith("- ")) {
+                            String serverName = trimmed.substring(2).trim().replaceAll("[\"']", "");
+                            if (!serverName.isEmpty() && !lobbyServers.contains(serverName)) {
+                                lobbyServers.add(serverName);
+                            }
+                            continue;
+                        } else {
+                            inLobbyServers = false;
+                        }
+                    }
+
                     switch (key) {
-                        case "target-server": this.targetServer = value; break;
+                        case "target-server":
+                            // Legacy support: if old data.yml has target-server, add as lobby
+                            if (!lobbyServers.contains(value)) {
+                                lobbyServers.add(0, value);
+                            }
+                            break;
                         case "world": this.lobbyWorld = value; this.lobbyCoordsSet = true; break;
                         case "x": try { this.lobbyX = Double.parseDouble(value); } catch (Exception ignored) {} break;
                         case "y": try { this.lobbyY = Double.parseDouble(value); } catch (Exception ignored) {} break;
@@ -442,11 +500,13 @@ public class XSetSpawnBungee extends Plugin implements Listener {
     // =========================================================================
 
     /**
-     * Parses config.yml for settings (server, aliases, cooldown, language).
+     * Parses config.yml for settings (lobby-servers, aliases, cooldown, language).
      */
     private void parseConfig(Path configFile) throws IOException {
         List<String> lines = Files.readAllLines(configFile);
-        Map<String, String> aliasMap = new LinkedHashMap<>();
+        List<String> lobbyList = new ArrayList<>();
+        List<String> aliasList = new ArrayList<>();
+        boolean inLobbyServers = false;
         boolean inAliases = false;
 
         for (String line : lines) {
@@ -454,18 +514,23 @@ public class XSetSpawnBungee extends Plugin implements Listener {
 
             if (trimmed.isEmpty() || trimmed.startsWith("#")) continue;
 
+            // Handle list items (lobby-servers and aliases)
+            if (trimmed.startsWith("- ") && inLobbyServers) {
+                String value = trimmed.substring(2).trim().replaceAll("[\"']", "");
+                if (!value.isEmpty()) {
+                    lobbyList.add(value);
+                }
+                continue;
+            }
             if (trimmed.startsWith("- ") && inAliases) {
                 String value = trimmed.substring(2).trim().replaceAll("[\"']", "");
                 if (!value.isEmpty()) {
-                    if (value.contains(":")) {
-                        String[] aliasParts = value.split(":", 2);
-                        aliasMap.put(aliasParts[0].trim(), aliasParts[1].trim());
-                    } else {
-                        aliasMap.put(value, targetServer);
-                    }
+                    aliasList.add(value);
                 }
                 continue;
-            } else if (!trimmed.startsWith("- ")) {
+            }
+            if (!trimmed.startsWith("- ")) {
+                inLobbyServers = false;
                 inAliases = false;
             }
 
@@ -475,8 +540,9 @@ public class XSetSpawnBungee extends Plugin implements Listener {
                 String value = parts.length > 1 ? parts[1].trim().replaceAll("[\"']", "") : "";
 
                 switch (key) {
-                    case "target-server":
-                        this.targetServer = value;
+                    case "lobby-servers":
+                        inLobbyServers = true;
+                        lobbyList.clear();
                         break;
                     case "cooldown":
                         try { this.cooldownSeconds = Integer.parseInt(value); } catch (NumberFormatException ignored) {}
@@ -493,9 +559,6 @@ public class XSetSpawnBungee extends Plugin implements Listener {
                     case "show-connecting-message":
                         this.showConnectingMessage = value.equalsIgnoreCase("true");
                         break;
-                    case "connect-on-first-join":
-                        this.connectOnFirstJoin = value.equalsIgnoreCase("true");
-                        break;
                     case "prefix":
                         this.prefix = translateColors(value);
                         break;
@@ -504,14 +567,22 @@ public class XSetSpawnBungee extends Plugin implements Listener {
                         break;
                     case "aliases":
                         inAliases = true;
-                        aliasMap.clear();
+                        aliasList.clear();
+                        break;
+                    // Legacy key: ignore but don't crash
+                    case "target-server":
+                        break;
+                    case "connect-on-first-join":
                         break;
                 }
             }
         }
 
-        if (!aliasMap.isEmpty()) {
-            this.aliasServers = aliasMap;
+        if (!lobbyList.isEmpty()) {
+            this.lobbyServers = lobbyList;
+        }
+        if (!aliasList.isEmpty()) {
+            this.aliases = aliasList;
         }
     }
 
@@ -568,7 +639,6 @@ public class XSetSpawnBungee extends Plugin implements Listener {
     // Public Accessors
     // =========================================================================
 
-    public String getTargetServer() { return targetServer; }
     public int getCooldownSeconds() { return cooldownSeconds; }
     public String getPrefix() { return prefix; }
     public boolean isShowConnectingMessage() { return showConnectingMessage; }
@@ -584,7 +654,6 @@ public class XSetSpawnBungee extends Plugin implements Listener {
     public String getMsgReloadSuccess() { return msgReloadSuccess; }
     public String getMsgReloadHelp() { return msgReloadHelp; }
     public Map<UUID, Long> getCooldowns() { return cooldowns; }
-    public Map<String, String> getAliasServers() { return aliasServers; }
 
     public boolean isLobbyCoordsSet() { return lobbyCoordsSet; }
     public String getLobbyWorld() { return lobbyWorld; }

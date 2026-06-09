@@ -18,11 +18,12 @@
 
 # Internal config version. DO NOT CHANGE!
 # If this is lower than the plugin's version, the config will auto-update.
-config-code: 7
+config-code: 8
 
-# Default target server (used by aliases without a server override).
-# /setlobby overrides this at runtime (saved to data.yml).
-target-server: lobby
+# List of lobby servers. /hub will send players to a RANDOM server from this list.
+# Add multiple servers for multi-lobby support (load balancing).
+lobby-servers:
+  - lobby
 
 # Global prefix for all plugin messages.
 prefix: "&8[&bX-SetSpawn&8]&r "
@@ -35,9 +36,8 @@ language: EN
 # Show the 'Sending you to {server}...' message on cross-server jumps?
 show-connecting-message: true
 
-# Command aliases. Format: command_name or command_name:server_name
-# Aliases without a server point to target-server above.
-# Examples: skyblock:skyblock creates /skyblock that sends to the skyblock server.
+# Command aliases that trigger the hub command.
+# All aliases send to a random lobby server from lobby-servers list.
 aliases:
   - hub
   - lobby
@@ -50,9 +50,6 @@ teleport-delay-join: 0
 
 # Delay (in milliseconds) before sending the teleport message when SWITCHING servers.
 teleport-delay-switch: 200
-
-# Automatically send players to the target server on first proxy join?
-connect-on-first-join: true
 
 # Enable detailed debug logging in the proxy console?
 debug: false

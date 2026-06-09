@@ -8,7 +8,7 @@ import net.md_5.bungee.api.plugin.Command;
 
 /**
  * Command handler for /setlobby on BungeeCord proxy.
- * Sets the current server as the global lobby server.
+ * Adds the current server to the lobby servers list and requests coordinates.
  */
 public class SetLobbyCommand extends Command {
 
@@ -40,8 +40,8 @@ public class SetLobbyCommand extends Command {
 
         String serverName = player.getServer().getInfo().getName();
         
-        // 1. Update the target server name
-        plugin.updateTargetServer(serverName);
+        // 1. Add the server to the lobby servers list (moves to front/primary)
+        plugin.addLobbyServer(serverName);
 
         // 2. Request coordinates from the backend server
         com.google.common.io.ByteArrayDataOutput out = com.google.common.io.ByteStreams.newDataOutput();
@@ -51,6 +51,6 @@ public class SetLobbyCommand extends Command {
         String msg = plugin.getMsgLobbySet().replace("{server}", serverName);
         player.sendMessage(new net.md_5.bungee.api.chat.TextComponent(plugin.getPrefix() + msg));
         
-        plugin.getLogger().info("Global lobby server updated to '" + serverName + "'. Requesting coordinates from backend...");
+        plugin.getLogger().info("Lobby server '" + serverName + "' added to lobby list. Requesting coordinates from backend...");
     }
 }

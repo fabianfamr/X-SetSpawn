@@ -14,17 +14,15 @@ import java.util.UUID;
 
 /**
  * Command handler for /hub, /lobby, /spawn on BungeeCord proxy.
- * Sends the player to the configured target server.
+ * Sends the player to a random lobby server from the configured list.
  */
 public class HubCommand extends Command {
 
     private final XSetSpawnBungee plugin;
-    private final String targetServerOverride;
 
-    public HubCommand(XSetSpawnBungee plugin, String name, String targetServerOverride) {
+    public HubCommand(XSetSpawnBungee plugin, String name) {
         super(name, "xsetspawn.lobby");
         this.plugin = plugin;
-        this.targetServerOverride = targetServerOverride;
     }
 
     @Override
@@ -38,11 +36,15 @@ public class HubCommand extends Command {
         ProxiedPlayer player = (ProxiedPlayer) sender;
         UUID uuid = player.getUniqueId();
         
-        // Find the target server (use override if set, otherwise default)
-        String serverName = (targetServerOverride != null && !targetServerOverride.isEmpty())
-                ? targetServerOverride : plugin.getTargetServer();
-        ServerInfo serverInfo = ProxyServer.getInstance().getServerInfo(serverName);
+        // Pick a random lobby server
+        String serverName = plugin.getRandomLobbyServer();
+        if (serverName == null) {
+            String msg = plugin.getMsgServerNotFound().replace("{server}", "lobby");
+            player.sendMessage(new TextComponent(plugin.getPrefix() + msg));
+            return;
+        }
 
+        ServerInfo serverInfo = ProxyServer.getInstance().getServerInfo(serverName);
         if (serverInfo == null) {
             String msg = plugin.getMsgServerNotFound().replace("{server}", serverName);
             player.sendMessage(new TextComponent(plugin.getPrefix() + msg));
@@ -50,12 +52,13 @@ public class HubCommand extends Command {
             return;
         }
 
-        boolean alreadyOnServer = player.getServer() != null 
-                && player.getServer().getInfo().getName().equalsIgnoreCase(serverName);
+        // Check if player is already on ANY lobby server
+        boolean alreadyOnLobby = player.getServer() != null 
+                && plugin.isLobbyServer(player.getServer().getInfo().getName());
 
-        // Check cooldown (ONLY if NOT already on the target server)
+        // Check cooldown (ONLY if NOT already on a lobby server)
         int cooldownTime = plugin.getCooldownSeconds();
-        if (cooldownTime > 0 && !alreadyOnServer) {
+        if (cooldownTime > 0 && !alreadyOnLobby) {
             Long lastUse = plugin.getCooldowns().get(uuid);
             if (lastUse != null) {
                 long elapsed = (System.currentTimeMillis() - lastUse) / 1000;
@@ -68,9 +71,9 @@ public class HubCommand extends Command {
             }
         }
 
-        if (alreadyOnServer) {
+        if (alreadyOnLobby) {
             // Show message and snap to coordinates (SILENT = false because it's a manual command)
-            String msg = plugin.getMsgAlreadyConnected().replace("{server}", serverName);
+            String msg = plugin.getMsgAlreadyConnected().replace("{server}", player.getServer().getInfo().getName());
             player.sendMessage(new TextComponent(plugin.getPrefix() + msg));
 
             ByteArrayDataOutput out = ByteStreams.newDataOutput();

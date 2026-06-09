@@ -10,7 +10,7 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Command handler for /setlobby on Velocity proxy.
- * Sets the current server as the global lobby server.
+ * Adds the current server to the lobby servers list and requests coordinates.
  */
 public class SetLobbyCommand implements SimpleCommand {
 
@@ -42,8 +42,8 @@ public class SetLobbyCommand implements SimpleCommand {
 
         String serverName = player.getCurrentServer().get().getServerInfo().getName();
 
-        // 1. Update the target server name
-        plugin.updateTargetServer(serverName);
+        // 1. Add the server to the lobby servers list (moves to front/primary)
+        plugin.addLobbyServer(serverName);
 
         // 2. Request coordinates from the backend server
         com.google.common.io.ByteArrayDataOutput out = com.google.common.io.ByteStreams.newDataOutput();
@@ -53,7 +53,7 @@ public class SetLobbyCommand implements SimpleCommand {
         String msg = plugin.getMsgLobbySet().replace("{server}", serverName);
         player.sendMessage(LEGACY.deserialize(plugin.getPrefix() + msg));
 
-        plugin.getLogger().info("Global lobby server updated to '{}'. Requesting coordinates from backend...", serverName);
+        plugin.getLogger().info("Lobby server '{}' added to lobby list. Requesting coordinates from backend...", serverName);
     }
 
     @Override

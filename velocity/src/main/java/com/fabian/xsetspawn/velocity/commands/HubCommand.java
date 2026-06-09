@@ -13,17 +13,15 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Command handler for /hub, /lobby, /spawn on Velocity proxy.
- * Sends the player to the configured target server.
+ * Sends the player to a random lobby server from the configured list.
  */
 public class HubCommand implements SimpleCommand {
 
     private final XSetSpawnVelocity plugin;
-    private final String targetServerOverride;
     private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
 
-    public HubCommand(XSetSpawnVelocity plugin, String targetServerOverride) {
+    public HubCommand(XSetSpawnVelocity plugin) {
         this.plugin = plugin;
-        this.targetServerOverride = targetServerOverride;
     }
 
     @Override
@@ -34,9 +32,14 @@ public class HubCommand implements SimpleCommand {
             return;
         }
 
-        // Check server info (use override if set, otherwise default)
-        String serverName = (targetServerOverride != null && !targetServerOverride.isEmpty())
-                ? targetServerOverride : plugin.getTargetServer();
+        // Pick a random lobby server
+        String serverName = plugin.getRandomLobbyServer();
+        if (serverName == null) {
+            String msg = plugin.getMsgServerNotFound().replace("{server}", "lobby");
+            player.sendMessage(LEGACY.deserialize(plugin.getPrefix() + msg));
+            return;
+        }
+
         Optional<RegisteredServer> targetServer = plugin.getServer().getServer(serverName);
 
         if (targetServer.isEmpty()) {
@@ -46,14 +49,15 @@ public class HubCommand implements SimpleCommand {
             return;
         }
 
-        boolean alreadyOnServer = player.getCurrentServer().isPresent() 
-                && player.getCurrentServer().get().getServerInfo().getName().equalsIgnoreCase(serverName);
+        // Check if player is already on ANY lobby server
+        boolean alreadyOnLobby = player.getCurrentServer().isPresent() 
+                && plugin.isLobbyServer(player.getCurrentServer().get().getServerInfo().getName());
 
-        // Check cooldown (ONLY if NOT already on the target server)
+        // Check cooldown (ONLY if NOT already on a lobby server)
         UUID uuid = player.getUniqueId();
         int cooldownTime = plugin.getCooldownSeconds();
 
-        if (cooldownTime > 0 && !alreadyOnServer) {
+        if (cooldownTime > 0 && !alreadyOnLobby) {
             Long lastUse = plugin.getCooldowns().get(uuid);
             if (lastUse != null) {
                 long elapsed = (System.currentTimeMillis() - lastUse) / 1000;
@@ -66,9 +70,10 @@ public class HubCommand implements SimpleCommand {
             }
         }
 
-        if (alreadyOnServer) {
+        if (alreadyOnLobby) {
             // Show message and snap to coordinates (SILENT = false because it's a manual command)
-            String msg = plugin.getMsgAlreadyConnected().replace("{server}", serverName);
+            String msg = plugin.getMsgAlreadyConnected().replace("{server}", 
+                    player.getCurrentServer().get().getServerInfo().getName());
             player.sendMessage(LEGACY.deserialize(plugin.getPrefix() + msg));
 
             com.google.common.io.ByteArrayDataOutput out = com.google.common.io.ByteStreams.newDataOutput();
