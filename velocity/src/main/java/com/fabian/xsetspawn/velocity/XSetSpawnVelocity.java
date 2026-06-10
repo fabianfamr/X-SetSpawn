@@ -41,7 +41,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @Plugin(
     id = "x-setspawn",
     name = "X-SetSpawn",
-    version = "2.2",
+    version = "2.3",
     description = "Proxy hub/lobby/spawn commands for X-SetSpawn",
     authors = {"Fabian"}
 )

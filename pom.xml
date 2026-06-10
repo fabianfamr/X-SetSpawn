@@ -6,7 +6,7 @@
 
     <groupId>com.fabian.xsetspawn</groupId>
     <artifactId>X-SetSpawn-Parent</artifactId>
-    <version>2.2</version>
+    <version>2.3</version>
     <packaging>pom</packaging>
 
     <name>X-SetSpawn</name>

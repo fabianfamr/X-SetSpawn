@@ -1,5 +1,5 @@
 name: X-SetSpawn
-version: 2.2
+version: 2.3
 main: com.fabian.xsetspawn.XSetSpawn
 api-version: "1.13"
 folia-supported: true

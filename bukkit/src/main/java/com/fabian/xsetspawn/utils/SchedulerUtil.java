@@ -116,8 +116,9 @@ public class SchedulerUtil {
         if (isFolia) {
             try {
                 long delayMillis = delayTicks * 50L;
-                Consumer<?> consumer = (scheduledTask) -> task.run();
-                Object scheduledTaskObj = asyncRunDelayedMethod.invoke(asyncScheduler, plugin, consumer, delayMillis, TimeUnit.MILLISECONDS);
+                Consumer<Object> consumer = (scheduledTask) -> task.run();
+                Object scheduledTaskObj = asyncRunDelayedMethod.invoke(
+                        asyncScheduler, new Object[]{plugin, consumer, delayMillis, TimeUnit.MILLISECONDS});
                 return createWrapper(scheduledTaskObj);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -133,8 +134,9 @@ public class SchedulerUtil {
         if (isFolia) {
             try {
                 long initialDelay = Math.max(1, delayTicks);
-                Consumer<?> consumer = (scheduledTask) -> task.run();
-                Object scheduledTaskObj = regionRunTimerMethod.invoke(regionScheduler, plugin, location, consumer, initialDelay, periodTicks);
+                Consumer<Object> consumer = (scheduledTask) -> task.run();
+                Object scheduledTaskObj = regionRunTimerMethod.invoke(
+                        regionScheduler, new Object[]{plugin, location, consumer, initialDelay, periodTicks});
                 return createWrapper(scheduledTaskObj);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -151,8 +153,10 @@ public class SchedulerUtil {
             try {
                 Object entityScheduler = entityGetSchedulerMethod.invoke(entity);
                 long initialDelay = Math.max(1, delayTicks);
-                Consumer<?> consumer = (scheduledTask) -> task.run();
-                Object scheduledTaskObj = entityRunTimerMethod.invoke(entityScheduler, plugin, consumer, () -> {}, initialDelay, periodTicks);
+                Consumer<Object> consumer = (scheduledTask) -> task.run();
+                Runnable retiredCallback = () -> {};
+                Object scheduledTaskObj = entityRunTimerMethod.invoke(
+                        entityScheduler, new Object[]{plugin, consumer, retiredCallback, initialDelay, periodTicks});
                 return createWrapper(scheduledTaskObj);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -168,10 +172,12 @@ public class SchedulerUtil {
         if (isFolia && entityRunMethod != null) {
             try {
                 Object entityScheduler = entityGetSchedulerMethod.invoke(entity);
-                Consumer<?> consumer = (scheduledTask) -> task.run();
-                entityRunMethod.invoke(entityScheduler, plugin, consumer, () -> {
+                Consumer<Object> consumer = (scheduledTask) -> task.run();
+                Runnable retiredCallback = () -> {
                     // Entity was removed/retired while task was pending — nothing to do
-                });
+                };
+                entityRunMethod.invoke(
+                        entityScheduler, new Object[]{plugin, consumer, retiredCallback});
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -183,8 +189,9 @@ public class SchedulerUtil {
     public static TaskWrapper runRegionDelayed(Plugin plugin, Location location, Runnable task, long delayTicks) {
         if (isFolia) {
             try {
-                Consumer<?> consumer = (scheduledTask) -> task.run();
-                Object scheduledTaskObj = regionRunDelayedMethod.invoke(regionScheduler, plugin, location, consumer, delayTicks);
+                Consumer<Object> consumer = (scheduledTask) -> task.run();
+                Object scheduledTaskObj = regionRunDelayedMethod.invoke(
+                        regionScheduler, new Object[]{plugin, location, consumer, delayTicks});
                 return createWrapper(scheduledTaskObj);
             } catch (Exception e) {
                 e.printStackTrace();

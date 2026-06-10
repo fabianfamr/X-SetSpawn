@@ -112,7 +112,7 @@ public class XSetSpawn extends JavaPlugin implements Listener {
             // Unregister the command so it doesn't show up at all
             try {
                 org.bukkit.command.CommandMap commandMap = getServer().getCommandMap();
-                org.bukkit.command.KnownCommand known = commandMap.getCommand("back");
+                org.bukkit.command.Command known = commandMap.getCommand("back");
                 if (known != null) {
                     known.unregister(commandMap);
                     commandMap.getKnownCommands().remove("back");
