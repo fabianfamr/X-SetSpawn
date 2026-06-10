@@ -5,7 +5,7 @@ api-version: 1.13
 folia-supported: true
 authors: [Fabian]
 website: https://xproyects.qzz.io
-description: "The ultimate spawn management plugin for Paper, Purpur, Folia & Bukkit (1.8.8+)."
+description: "Teleport to a custom spawn per world or global."
 softdepend: [PlaceholderAPI, Vault]
 
 commands:
