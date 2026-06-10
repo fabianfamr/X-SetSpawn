@@ -21,6 +21,7 @@ import com.fabian.xsetspawn.managers.BackManager;
 import com.fabian.xsetspawn.managers.PluginMessageManager;
 import com.fabian.xsetspawn.managers.DependencyManager;
 import com.fabian.xsetspawn.hooks.VaultHook;
+import com.fabian.xsetspawn.utils.CommandRegistrar;
 import com.fabian.xsetspawn.utils.SchedulerUtil;
 import com.fabian.xsetspawn.utils.UpdateChecker;
 import com.fabian.xsetspawn.utils.DebugLogger;
@@ -98,47 +99,31 @@ public class XSetSpawn extends JavaPlugin implements Listener {
             return;
         }
 
-        // Register commands
+        // Register commands dynamically via CommandRegistrar
         DebugLogger.debug("Command", "Registering commands...");
+        CommandRegistrar registrar = new CommandRegistrar(this);
+
         SetSpawnCommand setSpawnCommand = new SetSpawnCommand(this);
         SpawnCommand spawnCommand = new SpawnCommand(this);
         AdminCommand adminCommand = new AdminCommand(this);
         DelSpawnCommand delSpawnCommand = new DelSpawnCommand(this);
 
-        getCommand("setspawn").setExecutor(setSpawnCommand);
-        getCommand("setspawn").setTabCompleter(setSpawnCommand);
-        getCommand("spawn").setExecutor(spawnCommand);
-        getCommand("spawn").setTabCompleter(spawnCommand);
+        // Register the main command from plugin.yml
         getCommand("xsetspawn").setExecutor(adminCommand);
         getCommand("xsetspawn").setTabCompleter(adminCommand);
-        getCommand("delspawn").setExecutor(delSpawnCommand);
-        getCommand("delspawn").setTabCompleter(delSpawnCommand);
 
-        // Only register /back when enabled — when disabled the command is
-        // completely unknown to the server (no tab-complete, no "unknown command"
-        // confusion, and no fake "no permission" message).
+        // Register sub-commands dynamically
+        registrar.register("spawn", spawnCommand);
+        registrar.register("setspawn", setSpawnCommand, "ss");
+        registrar.register("delspawn", delSpawnCommand, "removespawn", "ds");
+
+        // Only register /back when enabled
         if (managerConfig.backEnabled) {
             BackCommand backCommand = new BackCommand(this);
-            getCommand("back").setExecutor(backCommand);
-        } else {
-            // Unregister the command so it doesn't show up at all
-            try {
-                org.bukkit.command.CommandMap commandMap = getServer().getCommandMap();
-                org.bukkit.command.Command known = commandMap.getCommand("back");
-                if (known != null) {
-                    known.unregister(commandMap);
-                    commandMap.getKnownCommands().remove("back");
-                    // Also remove aliases
-                    commandMap.getKnownCommands().remove("xsetspawn:back");
-                }
-            } catch (Exception ignored) {
-                // Fallback: set a no-op executor so it at least doesn't say "no permission"
-                getCommand("back").setExecutor((sender, command, label, args) -> {
-                    sender.sendMessage(getLanguageManager().getMessage("command-disabled"));
-                    return true;
-                });
-            }
+            registrar.register("back", backCommand);
         }
+        DebugLogger.debug("Command", "All commands registered");
+
 
         // Register dynamic aliases from config.yml
         DebugLogger.debug("Alias", "Registering command aliases...");

@@ -9,24 +9,10 @@ description: "Teleport to a custom spawn per world or global."
 softdepend: [PlaceholderAPI, Vault]
 
 commands:
-  spawn:
-    description: Teleport to the server spawn point
-    usage: /spawn
-  setspawn:
-    description: Set the spawn point at your current location
-    usage: /setspawn
-    aliases: [ss]
   xsetspawn:
     description: Main admin command for X-SetSpawn
     usage: /xsetspawn <reload|update|version|help|delspawn|setspawn>
     aliases: [xss]
-  delspawn:
-    description: Delete a named spawn point
-    usage: /delspawn <name>
-    aliases: [removespawn, ds]
-  back:
-    description: Return to your previous location
-    usage: /back
 
 permissions:
   xsetspawn.spawn:
