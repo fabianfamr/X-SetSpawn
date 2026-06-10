@@ -107,11 +107,11 @@ public class YamlStorage implements SpawnStorage {
 
     @Override
     public CompletableFuture<Void> save(String id, Location location) {
+        final String safeId = sanitizeId(id);
         return CompletableFuture.supplyAsync(() -> {
-            id = sanitizeId(id);
-            if (id.isEmpty()) return null;
+            if (safeId.isEmpty()) return null;
 
-            File spawnFile = new File(spawnsFolder, id + ".yml");
+            File spawnFile = new File(spawnsFolder, safeId + ".yml");
             FileConfiguration spawnConfig = new YamlConfiguration();
 
             spawnConfig.set("world", location.getWorld().getName());
@@ -124,7 +124,7 @@ public class YamlStorage implements SpawnStorage {
             try {
                 spawnConfig.save(spawnFile);
             } catch (IOException e) {
-                plugin.logError("Could not save spawn file " + id + ".yml: " + e.getMessage());
+                plugin.logError("Could not save spawn file " + safeId + ".yml: " + e.getMessage());
             }
             return null;
         });
@@ -132,11 +132,11 @@ public class YamlStorage implements SpawnStorage {
 
     @Override
     public CompletableFuture<Location> load(String id) {
+        final String safeId = sanitizeId(id);
         return CompletableFuture.supplyAsync(() -> {
-            id = sanitizeId(id);
-            if (id.isEmpty()) return null;
+            if (safeId.isEmpty()) return null;
 
-            File spawnFile = new File(spawnsFolder, id + ".yml");
+            File spawnFile = new File(spawnsFolder, safeId + ".yml");
             if (!spawnFile.exists()) return null;
 
             FileConfiguration spawnConfig = YamlConfiguration.loadConfiguration(spawnFile);
@@ -144,7 +144,7 @@ public class YamlStorage implements SpawnStorage {
             World world = Bukkit.getWorld(worldName);
 
             if (world == null) {
-                plugin.getLogger().warning("World " + worldName + " not found for spawn: " + id);
+                plugin.getLogger().warning("World " + worldName + " not found for spawn: " + safeId);
                 return null;
             }
 
@@ -160,22 +160,22 @@ public class YamlStorage implements SpawnStorage {
 
     @Override
     public CompletableFuture<Boolean> isSet(String id) {
+        final String safeId = sanitizeId(id);
         return CompletableFuture.supplyAsync(() -> {
-            id = sanitizeId(id);
-            if (id.isEmpty()) return false;
-            return new File(spawnsFolder, id + ".yml").exists();
+            if (safeId.isEmpty()) return false;
+            return new File(spawnsFolder, safeId + ".yml").exists();
         });
     }
 
     @Override
     public CompletableFuture<Void> remove(String id) {
+        final String safeId = sanitizeId(id);
         return CompletableFuture.supplyAsync(() -> {
-            id = sanitizeId(id);
-            if (id.isEmpty()) return null;
+            if (safeId.isEmpty()) return null;
 
-            File spawnFile = new File(spawnsFolder, id + ".yml");
+            File spawnFile = new File(spawnsFolder, safeId + ".yml");
             if (spawnFile.exists() && !spawnFile.delete()) {
-                plugin.logError("Could not delete spawn file: " + id + ".yml");
+                plugin.logError("Could not delete spawn file: " + safeId + ".yml");
             }
             return null;
         });
