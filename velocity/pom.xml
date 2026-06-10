@@ -44,6 +44,10 @@
                 <configuration>
                     <source>17</source>
                     <target>17</target>
+                    <compilerArgs>
+                        <arg>-Xlint:-options</arg>
+                        <arg>-Xlint:-deprecation</arg>
+                    </compilerArgs>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>com.velocitypowered</groupId>

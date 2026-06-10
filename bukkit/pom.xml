@@ -147,6 +147,7 @@
                     <target>1.8</target>
                     <compilerArgs>
                         <arg>-Xlint:-options</arg>
+                        <arg>-Xlint:-deprecation</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>
@@ -173,6 +174,7 @@
                                         <exclude>META-INF/DEPENDENCIES</exclude>
                                         <exclude>META-INF/NOTICE</exclude>
                                         <exclude>META-INF/LICENSE</exclude>
+                                        <exclude>META-INF/maven/**</exclude>
                                     </excludes>
                                 </filter>
                             </filters>
