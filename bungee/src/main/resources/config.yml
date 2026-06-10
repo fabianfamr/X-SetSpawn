@@ -18,7 +18,7 @@
 
 # Internal config version. DO NOT CHANGE!
 # If this is lower than the plugin's version, the config will auto-update.
-config-code: 8
+config-code: 9
 
 # List of lobby servers. /hub will send players to a RANDOM server from this list.
 # Add multiple servers for multi-lobby support (load balancing).
@@ -50,6 +50,9 @@ teleport-delay-join: 0
 
 # Delay (in milliseconds) before sending the teleport message when SWITCHING servers.
 teleport-delay-switch: 200
+
+# Automatically send players to a random lobby server on first proxy join?
+connect-on-first-join: true
 
 # Enable detailed debug logging in the proxy console?
 debug: false

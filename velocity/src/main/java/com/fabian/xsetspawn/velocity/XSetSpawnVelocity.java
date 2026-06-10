@@ -51,7 +51,7 @@ public class XSetSpawnVelocity {
     private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
 
     // Expected config-code version. If the user's file has a lower value, it gets rebuilt.
-    private static final int EXPECTED_CONFIG_CODE = 8;
+    private static final int EXPECTED_CONFIG_CODE = 9;
 
     private final ProxyServer server;
     private final Logger logger;
@@ -67,6 +67,7 @@ public class XSetSpawnVelocity {
     private int switchTeleportDelay = 200;
     private boolean debugEnabled = false;
     private boolean showConnectingMessage = true;
+    private boolean connectOnFirstJoin = true;
     private String language = "EN";
 
     // Global Lobby Location (synced from Bukkit)
@@ -260,6 +261,20 @@ public class XSetSpawnVelocity {
         if (!player.getCurrentServer().isPresent()) return;
 
         String serverName = player.getCurrentServer().get().getServerInfo().getName();
+
+        // Auto-connect to a random lobby on first proxy join
+        if (event.getPreviousServer() == null && connectOnFirstJoin && !isLobbyServer(serverName)) {
+            String lobbyName = getRandomLobbyServer();
+            if (lobbyName != null) {
+                server.getServer(lobbyName).ifPresent(target -> {
+                    player.createConnectionRequest(target).connect();
+                    if (debugEnabled) {
+                        logger.info("Auto-connecting {} to {} on first join.", player.getUsername(), lobbyName);
+                    }
+                });
+            }
+            return;
+        }
 
         if (!lobbyCoordsSet) return;
 
@@ -583,6 +598,9 @@ public class XSetSpawnVelocity {
                         break;
                     case "show-connecting-message":
                         this.showConnectingMessage = value.equalsIgnoreCase("true");
+                        break;
+                    case "connect-on-first-join":
+                        this.connectOnFirstJoin = value.equalsIgnoreCase("true");
                         break;
                     case "prefix":
                         this.prefix = translateColors(value);

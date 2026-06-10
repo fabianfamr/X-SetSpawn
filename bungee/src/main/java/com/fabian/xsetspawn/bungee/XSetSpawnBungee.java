@@ -38,7 +38,7 @@ public class XSetSpawnBungee extends Plugin implements Listener {
     public static final String CHANNEL = "xsetspawn:main";
 
     // Expected config-code version. If the user's file has a lower value, it gets rebuilt.
-    private static final int EXPECTED_CONFIG_CODE = 8;
+    private static final int EXPECTED_CONFIG_CODE = 9;
 
     // Config values
     private List<String> lobbyServers = new ArrayList<>(Arrays.asList("lobby"));
@@ -48,6 +48,7 @@ public class XSetSpawnBungee extends Plugin implements Listener {
     private int switchTeleportDelay = 200;
     private boolean debugEnabled = false;
     private boolean showConnectingMessage = true;
+    private boolean connectOnFirstJoin = true;
     private String language = "EN";
 
     // Global Lobby Location (synced from Bukkit)
@@ -237,6 +238,21 @@ public class XSetSpawnBungee extends Plugin implements Listener {
         if (player.getServer() == null) return;
         
         String serverName = player.getServer().getInfo().getName();
+        
+        // Auto-connect to a random lobby on first proxy join
+        if (event.getFrom() == null && connectOnFirstJoin && !isLobbyServer(serverName)) {
+            String lobbyName = getRandomLobbyServer();
+            if (lobbyName != null) {
+                ServerInfo target = getProxy().getServerInfo(lobbyName);
+                if (target != null) {
+                    player.connect(target);
+                    if (debugEnabled) {
+                        getLogger().info("Auto-connecting " + player.getName() + " to " + lobbyName + " on first join.");
+                    }
+                }
+            }
+            return;
+        }
         
         if (!lobbyCoordsSet) return;
         
@@ -558,6 +574,9 @@ public class XSetSpawnBungee extends Plugin implements Listener {
                         break;
                     case "show-connecting-message":
                         this.showConnectingMessage = value.equalsIgnoreCase("true");
+                        break;
+                    case "connect-on-first-join":
+                        this.connectOnFirstJoin = value.equalsIgnoreCase("true");
                         break;
                     case "prefix":
                         this.prefix = translateColors(value);
