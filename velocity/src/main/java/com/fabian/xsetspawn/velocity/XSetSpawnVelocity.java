@@ -25,6 +25,7 @@ import com.fabian.xsetspawn.velocity.commands.SetLobbyCommand;
 import com.fabian.xsetspawn.velocity.utils.UpdateChecker;
 import com.fabian.xsetspawn.velocity.metrics.Metrics;
 
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -156,12 +157,35 @@ public class XSetSpawnVelocity {
     // =========================================================================
 
     /**
-     * Returns a random lobby server from the configured list.
+     * Returns a random ONLINE lobby server from the configured list.
+     * If only 1 server is online, returns that one directly.
+     * If multiple are online, picks a random one.
      */
     public String getRandomLobbyServer() {
         if (lobbyServers.isEmpty()) return null;
-        if (lobbyServers.size() == 1) return lobbyServers.get(0);
-        return lobbyServers.get(ThreadLocalRandom.current().nextInt(lobbyServers.size()));
+
+        // Filter to only servers that are registered and have players connected
+        List<String> onlineLobbies = new ArrayList<>();
+        for (String name : lobbyServers) {
+            Optional<RegisteredServer> opt = server.getServer(name);
+            if (opt.isPresent() && !opt.get().getPlayersConnected().isEmpty()) {
+                onlineLobbies.add(name);
+            }
+        }
+
+        // Fallback: if no lobbies have players, try ones that are at least registered
+        if (onlineLobbies.isEmpty()) {
+            for (String name : lobbyServers) {
+                Optional<RegisteredServer> opt = server.getServer(name);
+                if (opt.isPresent()) {
+                    onlineLobbies.add(name);
+                }
+            }
+        }
+
+        if (onlineLobbies.isEmpty()) return null;
+        if (onlineLobbies.size() == 1) return onlineLobbies.get(0);
+        return onlineLobbies.get(ThreadLocalRandom.current().nextInt(onlineLobbies.size()));
     }
 
     /**
