@@ -4,6 +4,10 @@ import com.fabian.xsetspawn.XSetSpawn;
 import net.byteflux.libby.BukkitLibraryManager;
 import net.byteflux.libby.Library;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class DependencyManager {
 
     private final XSetSpawn plugin;
@@ -11,7 +15,14 @@ public class DependencyManager {
 
     public DependencyManager(XSetSpawn plugin) {
         this.plugin = plugin;
-        this.libraryManager = new BukkitLibraryManager(plugin);
+        try {
+            Path xapiPath = Paths.get(plugin.getDataFolder().getParent(), "X-API");
+            Files.createDirectories(xapiPath);
+            this.libraryManager = new BukkitLibraryManager(plugin, xapiPath);
+        } catch (Exception e) {
+            plugin.getLogger().warning("Could not create X-API directory, using default: " + e.getMessage());
+            this.libraryManager = new BukkitLibraryManager(plugin);
+        }
         this.libraryManager.addMavenCentral();
         this.libraryManager.addSonatype();
         this.libraryManager.addRepository("https://repo.papermc.io/repository/maven-public/");
@@ -21,7 +32,7 @@ public class DependencyManager {
         String storageType = plugin.getConfigManager().getConfig().getString("storage.type", "YAML").toUpperCase();
 
         try {
-            // Always load Adventure for MiniMessage support
+            plugin.getLogger().info("Loading runtime dependencies via X-API...");
             loadAdventureDependencies();
 
             if (storageType.equals("MONGODB") || storageType.equals("MONGO")) {
@@ -29,6 +40,7 @@ public class DependencyManager {
             } else if (storageType.equals("SQL") || storageType.equals("MYSQL") || storageType.equals("MARIADB") || storageType.equals("H2")) {
                 loadSqlDependencies(storageType);
             }
+            plugin.getLogger().info("All dependencies loaded successfully!");
         } catch (Exception e) {
             plugin.logError("Failed to load runtime database libraries! " + e.getMessage());
         }
@@ -127,7 +139,7 @@ public class DependencyManager {
         Library hikari = Library.builder()
                 .groupId("com.zaxxer")
                 .artifactId("HikariCP")
-                .version("3.4.5") // Java 8 compatible pool
+                .version("3.4.5")
                 .build();
 
         libraryManager.loadLibrary(slf4j);
