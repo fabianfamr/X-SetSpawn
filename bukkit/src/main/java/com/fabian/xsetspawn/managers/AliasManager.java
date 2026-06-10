@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.managers;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
@@ -31,6 +32,7 @@ public class AliasManager {
     }
 
     public void registerAliases() {
+        DebugLogger.debug("Alias", "Registering command aliases from config.yml");
         List<String> spawnAliases = plugin.getConfig().getStringList("command-aliases.spawn");
         List<String> setSpawnAliases = plugin.getConfig().getStringList("command-aliases.setspawn");
         List<String> adminAliases = plugin.getConfig().getStringList("command-aliases.xsetspawn");
@@ -72,6 +74,7 @@ public class AliasManager {
             proxy.setDescription("Alias for /" + commandName + " (X-SetSpawn)");
 
             try {
+                DebugLogger.debug("Alias", "Registering alias: /" + cleaned + " -> /" + commandName);
                 commandMap.register(plugin.getName().toLowerCase(), proxy);
             } catch (Exception e) {
                 plugin.getLogger().warning("Could not register alias '" + cleaned + "': " + e.getMessage());

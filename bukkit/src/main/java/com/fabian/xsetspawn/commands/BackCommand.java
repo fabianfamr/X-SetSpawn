@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.commands;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import com.fabian.xsetspawn.hooks.CombatHook;
 import com.fabian.xsetspawn.hooks.VaultHook;
 import com.fabian.xsetspawn.logic.CooldownManager;
@@ -30,6 +31,7 @@ public class BackCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        DebugLogger.debug("Command", "/back executed by " + sender.getName());
         if (!(sender instanceof Player)) {
             sender.sendMessage(languageManager.getMessage("player-only"));
             return true;
@@ -85,6 +87,7 @@ public class BackCommand implements CommandExecutor {
         // Check if there is a valid saved location (also handles expired / unloaded world)
         Location backLocation = backManager.getLocation(player);
         if (backLocation == null) {
+            DebugLogger.debug("Command", "No back location for " + player.getName());
             player.sendMessage(languageManager.getMessage("back-no-location"));
             return true;
         }
@@ -98,6 +101,7 @@ public class BackCommand implements CommandExecutor {
 
         // Consume the saved location (one-use)
         backManager.clearLocation(player);
+        DebugLogger.debug("Command", "Teleporting " + player.getName() + " back to " + backLocation.getWorld().getName());
 
         // Decide: delay or instant (respects per-command delay)
         int effectiveDelay = config.getDelayForCommand("back");

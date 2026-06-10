@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.commands;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import com.fabian.xsetspawn.managers.LanguageManager;
 import com.fabian.xsetspawn.managers.Permission;
 import com.fabian.xsetspawn.managers.SpawnManager;
@@ -46,6 +47,8 @@ public class ImportCommand {
      * Execute the import command.
      */
     public boolean execute(CommandSender sender, String[] args) {
+        String source = args.length > 0 ? args[0] : "none";
+        DebugLogger.debug("Command", "/xss import " + source + " executed by " + sender.getName());
         if (args.length < 1) {
             showUsage(sender);
             return true;
@@ -91,6 +94,7 @@ public class ImportCommand {
         }
 
         if (imported > 0) {
+            DebugLogger.debug("Command", "Imported " + imported + " spawns from " + source);
             // Mark as imported
             plugin.getConfig().set("imported." + source, true);
             plugin.saveConfig();

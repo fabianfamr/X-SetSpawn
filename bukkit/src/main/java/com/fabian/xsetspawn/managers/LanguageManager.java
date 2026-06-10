@@ -2,6 +2,7 @@ package com.fabian.xsetspawn.managers;
 
 import com.fabian.xsetspawn.XSetSpawn;
 import com.fabian.xsetspawn.utils.TextUtil;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -63,6 +64,7 @@ public class LanguageManager {
 
     public void loadLanguage() {
         this.currentLanguage = plugin.getManagerConfig().language.toLowerCase();
+        DebugLogger.debug("Language", "Loading language: " + this.currentLanguage);
 
         File messagesFolder = new File(plugin.getDataFolder(), "messages");
         if (!messagesFolder.exists()) {
@@ -78,6 +80,7 @@ public class LanguageManager {
 
         File languageFile = new File(plugin.getDataFolder(), "messages/" + currentLanguage + ".yml");
         if (!languageFile.exists()) {
+            DebugLogger.debug("Language", "Language file " + currentLanguage + ".yml not found, falling back to en.yml");
             plugin.getLogger().warning("Language file " + currentLanguage + ".yml not found! Using en.yml");
             languageFile = new File(plugin.getDataFolder(), "messages/en.yml");
             this.currentLanguage = "en";
@@ -105,6 +108,7 @@ public class LanguageManager {
     }
 
     public void reloadLanguage() {
+        DebugLogger.debug("Language", "Reloading language...");
         loadLanguage();
     }
 
@@ -130,6 +134,7 @@ public class LanguageManager {
      * Change the language
      */
     public boolean setLanguage(String lang) {
+        DebugLogger.debug("Language", "Changing language to: " + lang);
         String newLang = lang.toLowerCase();
         java.util.List<String> available = getAvailableLanguages();
 
@@ -160,6 +165,9 @@ public class LanguageManager {
 
     public String getMessage(String key, Object... args) {
         String message = languageConfig.getString(key);
+        if (message == null) {
+            DebugLogger.debug("Language", "Missing language key: " + key);
+        }
         String prefix = plugin.getManagerConfig().prefix;
 
         if (message == null) {

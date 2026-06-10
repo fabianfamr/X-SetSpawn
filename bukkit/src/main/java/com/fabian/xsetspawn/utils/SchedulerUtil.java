@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.utils;
 
 import org.bukkit.Bukkit;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import org.bukkit.Location;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -31,6 +32,7 @@ public class SchedulerUtil {
         try {
             Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
             isFolia = true;
+            DebugLogger.debug("Scheduler", "Folia detected - using region/entity schedulers");
 
             Object server = Bukkit.getServer();
             

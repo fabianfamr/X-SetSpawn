@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.managers.storage;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -22,6 +23,7 @@ public class YamlStorage implements SpawnStorage {
 
     public YamlStorage(XSetSpawn plugin) {
         this.plugin = plugin;
+        DebugLogger.debug("Storage", "Initializing YAML storage...");
         plugin.log("&eConnecting to YAML database...");
         this.spawnsFolder = new File(plugin.getDataFolder(), "spawns");
         if (!spawnsFolder.exists()) {
@@ -108,6 +110,7 @@ public class YamlStorage implements SpawnStorage {
     @Override
     public CompletableFuture<Void> save(String id, Location location) {
         final String safeId = sanitizeId(id);
+        DebugLogger.debug("Storage", "YAML save: " + safeId);
         return CompletableFuture.supplyAsync(() -> {
             if (safeId.isEmpty()) return null;
 
@@ -133,6 +136,7 @@ public class YamlStorage implements SpawnStorage {
     @Override
     public CompletableFuture<Location> load(String id) {
         final String safeId = sanitizeId(id);
+        DebugLogger.debug("Storage", "YAML load: " + safeId);
         return CompletableFuture.supplyAsync(() -> {
             if (safeId.isEmpty()) return null;
 
@@ -170,6 +174,7 @@ public class YamlStorage implements SpawnStorage {
     @Override
     public CompletableFuture<Void> remove(String id) {
         final String safeId = sanitizeId(id);
+        DebugLogger.debug("Storage", "YAML remove: " + safeId);
         return CompletableFuture.supplyAsync(() -> {
             if (safeId.isEmpty()) return null;
 
@@ -197,6 +202,7 @@ public class YamlStorage implements SpawnStorage {
 
     @Override
     public CompletableFuture<java.util.Map<String, Location>> loadAll() {
+        DebugLogger.debug("Storage", "YAML loadAll: loading all spawns...");
         return CompletableFuture.supplyAsync(() -> {
             java.util.Map<String, Location> map = new java.util.HashMap<>();
             try {

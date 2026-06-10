@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.managers;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -20,6 +21,7 @@ public class ConfigManager {
     }
 
     public void loadConfig() {
+        DebugLogger.debug("Config", "Loading configuration...");
         plugin.saveDefaultConfig();
         plugin.reloadConfig();
         this.config = plugin.getConfig();
@@ -33,6 +35,7 @@ public class ConfigManager {
             int newCode = defaultConfig.getInt("code", 0);
             
             if (currentCode < newCode) {
+                DebugLogger.debug("Config", "Config update detected: " + currentCode + " -> " + newCode);
                 plugin.log("&7Found a newer configuration version! &f(&e" + currentCode + " &7-> &a" + newCode + "&f)");
                 backupConfig();
                 rebuildConfig();
@@ -48,6 +51,7 @@ public class ConfigManager {
     }
 
     private void backupConfig() {
+        DebugLogger.debug("Config", "Creating config backup...");
         try {
             File configFile = new File(plugin.getDataFolder(), "config.yml");
             File backupFile = new File(plugin.getDataFolder(), "config_old.yml");
@@ -59,6 +63,7 @@ public class ConfigManager {
     }
 
     public void rebuildConfig() {
+        DebugLogger.debug("Config", "Rebuilding config from default template...");
         try {
             InputStream is = plugin.getResource("config.yml");
             if (is == null) return;
@@ -116,7 +121,7 @@ public class ConfigManager {
             java.nio.file.Files.write(configFile.toPath(), outLines, java.nio.charset.StandardCharsets.UTF_8);
 
         } catch (Exception e) {
-            plugin.getLogger().warning("Could not rebuild config.yml: " + e.getMessage());
+            DebugLogger.debug("Config", "Failed to rebuild config.yml", e);
             e.printStackTrace();
         }
     }
@@ -139,6 +144,7 @@ public class ConfigManager {
     }
     
     public void reloadConfiguration() {
+        DebugLogger.debug("Config", "Reloading configuration...");
         loadConfig();
     }
 

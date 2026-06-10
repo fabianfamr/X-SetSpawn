@@ -1,5 +1,6 @@
 package com.fabian.xsetspawn.hooks;
 
+import com.fabian.xsetspawn.utils.DebugLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.MetadataValue;
@@ -41,6 +42,7 @@ public class CombatHook {
         } else {
             detectedPlugin = CombatPlugin.NONE;
         }
+        DebugLogger.debug("Combat", "Detected combat plugin: " + detectedPlugin);
         return detectedPlugin;
     }
 

@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.listeners;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
@@ -21,6 +22,7 @@ public class CommandListener implements Listener {
             return;
         }
 
+        DebugLogger.debug("Listener", "Filtering namespaced commands for player");
         try {
             // Get the collection of commands being sent to the player
             java.lang.reflect.Method getCommandsMethod = event.getClass().getMethod("getCommands");

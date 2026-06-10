@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.managers;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -62,6 +63,7 @@ public class BackManager {
         if (player == null || player.getLocation() == null) return;
         UUID uuid = player.getUniqueId();
         if (!overwrite && backLocations.containsKey(uuid)) return;
+        DebugLogger.debug("BackManager", "Saving back location for " + player.getName() + " (overwrite=" + overwrite + ")");
         backLocations.put(uuid, new BackEntry(player.getLocation().clone()));
     }
 
@@ -78,12 +80,16 @@ public class BackManager {
      */
     public Location getLocation(Player player) {
         BackEntry entry = backLocations.get(player.getUniqueId());
-        if (entry == null) return null;
+        if (entry == null) {
+            DebugLogger.debug("BackManager", "No back location found for " + player.getName());
+            return null;
+        }
 
         int expiresMinutes = plugin.getManagerConfig().backExpires;
         if (expiresMinutes > 0) {
             long expiredAt = entry.timestamp + (expiresMinutes * 60_000L);
             if (System.currentTimeMillis() > expiredAt) {
+                DebugLogger.debug("BackManager", "Back location expired for " + player.getName());
                 backLocations.remove(player.getUniqueId());
                 return null;
             }
@@ -93,6 +99,7 @@ public class BackManager {
         World world = loc.getWorld();
         if (world == null || !Bukkit.getWorlds().contains(world)) {
             // World was unloaded — remove stale entry
+            DebugLogger.debug("BackManager", "Back location world unloaded for " + player.getName());
             backLocations.remove(player.getUniqueId());
             return null;
         }
@@ -109,7 +116,10 @@ public class BackManager {
      * Removes the saved location for a player (e.g. after using /back).
      */
     public void clearLocation(Player player) {
-        if (player != null) backLocations.remove(player.getUniqueId());
+        if (player != null) {
+            DebugLogger.debug("BackManager", "Clearing back location for " + player.getName());
+            backLocations.remove(player.getUniqueId());
+        }
     }
 
     /**

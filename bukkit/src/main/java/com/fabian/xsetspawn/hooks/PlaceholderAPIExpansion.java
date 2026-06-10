@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.hooks;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
@@ -43,6 +44,7 @@ public class PlaceholderAPIExpansion extends PlaceholderExpansion {
     public String onRequest(OfflinePlayer offlinePlayer, String params) {
         if (offlinePlayer == null || !offlinePlayer.isOnline()) return null;
         Player player = offlinePlayer.getPlayer();
+        DebugLogger.debug("PAPI", "Placeholder requested: xsetspawn_" + params + " by " + player.getName());
 
         // ---- Cooldown ----
         if (params.equalsIgnoreCase("cooldown")) {

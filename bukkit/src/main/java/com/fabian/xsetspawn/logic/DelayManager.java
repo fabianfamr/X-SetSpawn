@@ -2,6 +2,7 @@ package com.fabian.xsetspawn.logic;
 
 import com.fabian.xsetspawn.XSetSpawn;
 import com.fabian.xsetspawn.managers.ManagerConfig;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import com.fabian.xsetspawn.utils.HologramUtil;
 import com.fabian.xsetspawn.utils.VisualUtil;
 import org.bukkit.Bukkit;
@@ -43,6 +44,7 @@ public class DelayManager implements Listener {
 
     public void scheduleTeleport(Player player, Location location, int seconds, String successMessage, TeleportEvent eventType) {
         cancelTeleport(player);
+        DebugLogger.debug("DelayManager", "Scheduling teleport for " + player.getName() + ": " + seconds + "s delay, event=" + eventType);
 
         ManagerConfig config = plugin.getManagerConfig();
         player.sendMessage(plugin.getLanguageManager().getMessage("teleporting-in", seconds));
@@ -189,6 +191,7 @@ public class DelayManager implements Listener {
     public void cancelTeleport(Player player) {
         TeleportSession session = pendingTeleports.remove(player.getUniqueId());
         if (session != null) {
+            DebugLogger.debug("DelayManager", "Cancelled pending teleport for " + player.getName());
             session.cancel();
         }
     }
@@ -210,6 +213,7 @@ public class DelayManager implements Listener {
                     event.getFrom().getBlockZ() != event.getTo().getBlockZ()) {
 
                 cancelTeleport(player);
+                DebugLogger.debug("DelayManager", "Teleport cancelled by movement for " + player.getName());
                 // Clear the back-location that was saved when the delay started,
                 // since the teleport never actually happened.
                 plugin.getBackManager().clearLocation(player);

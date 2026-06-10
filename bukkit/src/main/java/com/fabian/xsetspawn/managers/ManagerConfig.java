@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.managers;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.util.List;
@@ -110,6 +111,7 @@ public class ManagerConfig {
     }
 
     public void load() {
+        DebugLogger.debug("Config", "Loading ManagerConfig values...");
         FileConfiguration config = plugin.getConfig();
 
         // Language & Updates
@@ -206,6 +208,7 @@ public class ManagerConfig {
     }
 
     public void reload() {
+        DebugLogger.debug("Config", "Reloading ManagerConfig...");
         load();
     }
 

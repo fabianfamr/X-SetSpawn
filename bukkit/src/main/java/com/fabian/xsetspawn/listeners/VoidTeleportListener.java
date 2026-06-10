@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.listeners;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import com.fabian.xsetspawn.managers.ManagerConfig;
 import com.fabian.xsetspawn.managers.SpawnManager;
 import com.fabian.xsetspawn.utils.SchedulerUtil;
@@ -33,6 +34,7 @@ public class VoidTeleportListener implements Listener {
         int voidY = config.voidTeleportHeight;
         
         if (event.getTo().getY() < voidY) {
+            DebugLogger.debug("Listener", "Void teleport triggered for " + player.getName() + " (Y=" + (int)event.getTo().getY() + " < " + voidY + ")");
             World world = player.getWorld();
             Location spawn = spawnManager.getSpawn(world);
             if (spawn != null) {

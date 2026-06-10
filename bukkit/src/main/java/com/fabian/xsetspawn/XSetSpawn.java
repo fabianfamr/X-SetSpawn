@@ -23,6 +23,7 @@ import com.fabian.xsetspawn.managers.DependencyManager;
 import com.fabian.xsetspawn.hooks.VaultHook;
 import com.fabian.xsetspawn.utils.SchedulerUtil;
 import com.fabian.xsetspawn.utils.UpdateChecker;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import com.fabian.xsetspawn.metrics.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -56,38 +57,49 @@ public class XSetSpawn extends JavaPlugin implements Listener {
         // Initialize config managers first to check storage type
         try {
             this.configManager = new ConfigManager(this);
+            DebugLogger.debug("Config", "ConfigManager initialized");
             this.managerConfig = new ManagerConfig(this);
+            DebugLogger.debug("Config", "ManagerConfig initialized (debug=" + managerConfig.debugEnabled + ", storage=" + managerConfig.storageType + ", language=" + managerConfig.language + ")");
         } catch (Exception e) {
-            logError("Could not initialize config managers: " + e.getMessage());
+            DebugLogger.debug("Config", "Failed to initialize config managers", e);
             e.printStackTrace();
             Bukkit.getPluginManager().disablePlugin(this);
             return;
         }
 
         // Initialize and load dependencies
+        DebugLogger.debug("Dependency", "Initializing DependencyManager...");
         this.dependencyManager = new DependencyManager(this);
         this.dependencyManager.loadDependencies();
 
         // Initialize remaining managers
         try {
             this.storageManager = new StorageManager(this);
+            DebugLogger.debug("Storage", "StorageManager initialized");
             this.languageManager = new LanguageManager(this);
+            DebugLogger.debug("Language", "LanguageManager initialized");
             this.spawnManager = new SpawnManager(this);
             this.spawnManager.loadCachesAsync();
+            DebugLogger.debug("SpawnManager", "SpawnManager initialized, loading caches async");
             this.cooldownManager = new CooldownManager();
             this.delayManager = new DelayManager(this);
+            DebugLogger.debug("DelayManager", "DelayManager initialized");
             this.vaultHook = new VaultHook(this);
+            DebugLogger.debug("Vault", "VaultHook initialized, setup=" + vaultHook.isSetup());
             this.backManager = new BackManager(this);
             this.backManager.startCleanupTask();
+            DebugLogger.debug("BackManager", "BackManager initialized, cleanup task started");
             this.pluginMessageManager = new PluginMessageManager(this);
+            DebugLogger.debug("PluginMessage", "PluginMessageManager initialized");
         } catch (Exception e) {
-            logError("Could not initialize handlers: " + e.getMessage());
+            DebugLogger.debug("Init", "Failed to initialize handlers", e);
             e.printStackTrace();
             Bukkit.getPluginManager().disablePlugin(this);
             return;
         }
 
         // Register commands
+        DebugLogger.debug("Command", "Registering commands...");
         SetSpawnCommand setSpawnCommand = new SetSpawnCommand(this);
         SpawnCommand spawnCommand = new SpawnCommand(this);
         AdminCommand adminCommand = new AdminCommand(this);
@@ -129,11 +141,15 @@ public class XSetSpawn extends JavaPlugin implements Listener {
         }
 
         // Register dynamic aliases from config.yml
+        DebugLogger.debug("Alias", "Registering command aliases...");
         new AliasManager(this).registerAliases();
 
         // Register PlaceholderAPI hook
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            DebugLogger.debug("PAPI", "PlaceholderAPI found, registering expansion");
             new com.fabian.xsetspawn.hooks.PlaceholderAPIExpansion(this).register();
+        } else {
+            DebugLogger.debug("PAPI", "PlaceholderAPI not found, skipping expansion");
         }
 
         // Register events
@@ -163,6 +179,7 @@ public class XSetSpawn extends JavaPlugin implements Listener {
 
         // Check for updates
         if (managerConfig.checkUpdates) {
+            DebugLogger.debug("Update", "Update checker enabled, scheduling check");
             this.updateChecker = new UpdateChecker(this);
             SchedulerUtil.runAsyncDelayed(this, () -> {
                 updateChecker.checkForUpdates();
@@ -184,6 +201,7 @@ public class XSetSpawn extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        DebugLogger.debug("Init", "Plugin disabling...");
         // Clean up any active holograms (ArmorStands) to prevent orphaned entities
         com.fabian.xsetspawn.utils.HologramUtil.removeAll();
 

@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.commands;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import com.fabian.xsetspawn.logic.DelayManager;
 import com.fabian.xsetspawn.logic.CooldownManager;
 import com.fabian.xsetspawn.managers.LanguageManager;
@@ -35,6 +36,7 @@ public class SpawnCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        DebugLogger.debug("Command", "/spawn executed by " + sender.getName());
         if (!(sender instanceof Player)) {
             sender.sendMessage(languageManager.getMessage("player-only"));
             return true;
@@ -44,18 +46,21 @@ public class SpawnCommand implements CommandExecutor, TabCompleter {
 
         // 1. Permission Check
         if (!Permission.SPAWN.has(player)) {
+            DebugLogger.debug("Command", "Permission denied for /spawn: " + player.getName());
             player.sendMessage(languageManager.getMessage("no-permission"));
             return true;
         }
 
         // 2. Combat Check
         if (config.combatCheckEnabled && CombatHook.isInCombat(player)) {
+            DebugLogger.debug("Command", "Spawn blocked - player in combat: " + player.getName());
             player.sendMessage(languageManager.getMessage("combat-active"));
             return true;
         }
 
         // 3. Falling Check
         if (config.fallingCheckEnabled && player.getFallDistance() > 0) {
+            DebugLogger.debug("Command", "Spawn blocked - player falling: " + player.getName());
             player.sendMessage(languageManager.getMessage("falling-active"));
             return true;
         }
@@ -69,6 +74,7 @@ public class SpawnCommand implements CommandExecutor, TabCompleter {
         if (args.length > 0 && config.namedSpawns) {
             spawnName = args[0].toLowerCase();
             if (spawnManager.isNamedSpawnSet(spawnName)) {
+                DebugLogger.debug("Command", "Named spawn selected: " + spawnName + " by " + player.getName());
                 // Check named spawn permission
                 if (!player.hasPermission("xsetspawn.spawn." + spawnName) && !Permission.ADMIN.has(player)) {
                     player.sendMessage(languageManager.getMessage("no-permission"));
@@ -85,6 +91,7 @@ public class SpawnCommand implements CommandExecutor, TabCompleter {
         }
 
         if (spawnLocation == null) {
+            DebugLogger.debug("Command", "No spawn available for " + player.getName() + " (named=" + isNamed + ", world=" + world.getName() + ")");
             if (isNamed) {
                  player.sendMessage(languageManager.getMessage("spawn-not-found", spawnName));
             } else if (config.perWorld) {
@@ -100,6 +107,7 @@ public class SpawnCommand implements CommandExecutor, TabCompleter {
         if (config.cooldownEnabled && !Permission.BYPASS_COOLDOWN.has(player)) {
             if (cooldownManager.isOnCooldown(player)) {
                 long secondsLeft = cooldownManager.getRemainingTime(player);
+                DebugLogger.debug("Command", "Spawn blocked - cooldown active for " + player.getName() + " (" + secondsLeft + "s remaining)");
                 player.sendMessage(languageManager.getMessage("cooldown-active", secondsLeft));
                 return true;
             }
@@ -128,6 +136,7 @@ public class SpawnCommand implements CommandExecutor, TabCompleter {
         DelayManager delayManager = plugin.getDelayManager();
         int effectiveDelay = config.getDelayForCommand("spawn");
         if (config.delayEnabled && !Permission.BYPASS_DELAY.has(player) && effectiveDelay > 0) {
+            DebugLogger.debug("Command", "Scheduling delayed spawn teleport for " + player.getName() + " (" + effectiveDelay + "s)");
             // Save back-location at the START of the delay (so the player can go back
             // if the delay completes and they get teleported).  If the delay is
             // cancelled (movement), the back-location is cleared by DelayManager.
@@ -137,6 +146,7 @@ public class SpawnCommand implements CommandExecutor, TabCompleter {
             // Instant Teleport — save location right before teleporting
             plugin.getBackManager().saveLocation(player);
             
+            DebugLogger.debug("Command", "Instant teleport for " + player.getName() + " to " + spawnLocation.getWorld().getName());
             final Location finalLocation = spawnLocation;
             final String finalMessage = successMessage;
             

@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.managers;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import com.fabian.xsetspawn.utils.SchedulerUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -18,6 +19,7 @@ public class PluginMessageManager implements PluginMessageListener {
 
     public PluginMessageManager(XSetSpawn plugin) {
         this.plugin = plugin;
+        DebugLogger.debug("PluginMessage", "Registering plugin message channels: " + CHANNEL);
         plugin.getServer().getMessenger().registerOutgoingPluginChannel(plugin, CHANNEL);
         plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, CHANNEL, this);
     }
@@ -26,11 +28,13 @@ public class PluginMessageManager implements PluginMessageListener {
     public void onPluginMessageReceived(String channel, Player player, byte[] message) {
         if (!channel.equals(CHANNEL) || message == null || message.length < 2) return;
 
+        DebugLogger.debug("PluginMessage", "Received plugin message on channel: " + channel);
         try {
             ByteArrayDataInput in = ByteStreams.newDataInput(message);
             String subChannel = in.readUTF();
 
             if (subChannel.equals("TeleportLobby")) {
+                DebugLogger.debug("PluginMessage", "SubChannel TeleportLobby for player: " + player.getName());
                 String uuidString = in.readUTF();
                 UUID uuid = UUID.fromString(uuidString);
                 Player target = Bukkit.getPlayer(uuid);
@@ -66,6 +70,7 @@ public class PluginMessageManager implements PluginMessageListener {
                     }
                 }
             } else if (subChannel.equals("RequestLocation")) {
+                DebugLogger.debug("PluginMessage", "SubChannel RequestLocation from proxy for: " + player.getName());
                 // Proxy is asking for player coordinates to set the global lobby
                 Location loc = player.getLocation();
                 ByteArrayDataOutput out = ByteStreams.newDataOutput();
@@ -80,6 +85,7 @@ public class PluginMessageManager implements PluginMessageListener {
 
             } else if (subChannel.equals("GlobalLobbyTeleport")) {
                 // Incoming forced teleport from Proxy
+                DebugLogger.debug("PluginMessage", "SubChannel GlobalLobbyTeleport for " + player.getName() + " to " + worldName);
                 String worldName = in.readUTF();
                 double x = in.readDouble();
                 double y = in.readDouble();
@@ -97,9 +103,7 @@ public class PluginMessageManager implements PluginMessageListener {
                     boolean finalSilent = silent;
                     SchedulerUtil.runEntity(plugin, player, () -> {
                         if (player.isOnline()) {
-                            if (plugin.getManagerConfig().debugEnabled) {
-                                plugin.log("Received GlobalLobbyTeleport for " + player.getName() + " to " + worldName + " (" + (int)x + ", " + (int)y + ", " + (int)z + ") [Silent: " + finalSilent + "]");
-                            }
+                            DebugLogger.debug("PluginMessage", "Executing GlobalLobbyTeleport for " + player.getName() + " to " + worldName + " (" + (int)x + ", " + (int)y + ", " + (int)z + ") [Silent: " + finalSilent + "]");
 
                             // Bypass double waits: Cancel any pending Bukkit-side teleport delays
                             plugin.getDelayManager().cancelTeleport(player);
@@ -114,11 +118,12 @@ public class PluginMessageManager implements PluginMessageListener {
                         }
                     });
                 } else {
+                    DebugLogger.debug("PluginMessage", "GlobalLobbyTeleport failed: world '" + worldName + "' not found");
                     plugin.logError("GlobalLobbyTeleport failed: World '" + worldName + "' not found on this server!");
                 }
             }
         } catch (Exception e) {
-            // Enhanced error logging to catch the "null" error issue
+            DebugLogger.debug("PluginMessage", "Error decoding plugin message", e);
             String errorMsg = e.getMessage() != null ? e.getMessage() : "No message (NullPointerException or EOF)";
             plugin.logError("Error decoding plugin message on channel '" + channel + "': " + e.getClass().getSimpleName() + " - " + errorMsg);
             
@@ -131,6 +136,7 @@ public class PluginMessageManager implements PluginMessageListener {
 
     public void sendLobbySync(Player sender) {
         if (sender == null) return;
+        DebugLogger.debug("PluginMessage", "Sending lobby sync for " + sender.getName());
         try {
             ByteArrayDataOutput out = ByteStreams.newDataOutput();
             out.writeUTF("SetLobbyServer");

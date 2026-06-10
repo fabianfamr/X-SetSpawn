@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.managers.storage;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.bukkit.Bukkit;
@@ -29,11 +30,13 @@ public class SqlStorage implements SpawnStorage {
     public SqlStorage(XSetSpawn plugin, String type, String host, int port, String database, String username, String password) {
         this.plugin = plugin;
         this.isH2 = type.equalsIgnoreCase("H2");
+        DebugLogger.debug("Storage", "Initializing SQL storage (type=" + type + ", host=" + host + ", db=" + database + ")...");
         com.fabian.xsetspawn.utils.SchedulerUtil.runAsync(plugin, () -> {
             setupDataSource(type, host, port, database, username, password);
             createTable();
             ready = true;
             readyLatch.countDown();
+            DebugLogger.debug("Storage", "SQL storage ready (" + type + ")");
             if (plugin.getSpawnManager() != null) {
                 plugin.getSpawnManager().loadCachesAsync();
             }
@@ -104,6 +107,7 @@ public class SqlStorage implements SpawnStorage {
     }
 
     private void createTable() {
+        DebugLogger.debug("Storage", "Creating SQL table: " + tableName);
         String sql = "CREATE TABLE IF NOT EXISTS " + tableName + " (" +
                 "id VARCHAR(64) PRIMARY KEY, " +
                 "world VARCHAR(64) NOT NULL, " +
@@ -124,6 +128,7 @@ public class SqlStorage implements SpawnStorage {
 
     @Override
     public CompletableFuture<Void> save(String id, Location location) {
+        DebugLogger.debug("Storage", "SQL save: " + id);
         return CompletableFuture.supplyAsync(() -> {
             if (!ready || dataSource == null) return null;
             try (Connection conn = dataSource.getConnection()) {
@@ -172,6 +177,7 @@ public class SqlStorage implements SpawnStorage {
 
     @Override
     public CompletableFuture<Location> load(String id) {
+        DebugLogger.debug("Storage", "SQL load: " + id);
         return CompletableFuture.supplyAsync(() -> {
             if (!ready || dataSource == null) return null;
             String sql = "SELECT * FROM " + tableName + " WHERE id = ?;";
@@ -255,6 +261,7 @@ public class SqlStorage implements SpawnStorage {
 
     @Override
     public CompletableFuture<java.util.Map<String, Location>> loadAll() {
+        DebugLogger.debug("Storage", "SQL loadAll: loading all spawns...");
         return CompletableFuture.supplyAsync(() -> {
             java.util.Map<String, Location> map = new java.util.HashMap<>();
             if (!ready || dataSource == null) return map;
@@ -284,6 +291,7 @@ public class SqlStorage implements SpawnStorage {
 
     @Override
     public void close() {
+        DebugLogger.debug("Storage", "Closing SQL connection pool...");
         if (dataSource != null && !dataSource.isClosed()) {
             silenceHikariLogs();
             dataSource.close();

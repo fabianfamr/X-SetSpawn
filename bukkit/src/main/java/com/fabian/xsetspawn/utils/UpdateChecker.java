@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.utils;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import com.fabian.xsetspawn.managers.LanguageManager;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -28,6 +29,7 @@ public class UpdateChecker {
     }
 
     public void checkForUpdates(CommandSender sender) {
+        DebugLogger.debug("Update", "Checking for updates (sender=" + (sender != null ? sender.getName() : "console") + ")...");
         SchedulerUtil.runAsyncDelayed(plugin, () -> {
             try {
                 String currentVersion = plugin.getDescription().getVersion();
@@ -50,6 +52,7 @@ public class UpdateChecker {
 
                 if (latestVersion != null && isNewer(currentVersion, latestVersion)) {
                     this.updateAvailable = true;
+                    DebugLogger.debug("Update", "Update available: " + currentVersion + " -> " + latestVersion);
 
                     if (sender != null) {
                         sender.sendMessage(lang.getMessage("update-available", currentVersion, latestVersion));
@@ -60,6 +63,7 @@ public class UpdateChecker {
                         Bukkit.getConsoleSender().sendMessage(lang.getMessage("update-download", getDownloadUrl()));
                     }
                 } else {
+                    DebugLogger.debug("Update", "Plugin is up to date (" + currentVersion + ")");
                     if (sender != null) {
                         sender.sendMessage(lang.getMessage("update-current"));
                     } else {
@@ -68,6 +72,7 @@ public class UpdateChecker {
                 }
 
             } catch (Exception e) {
+                DebugLogger.debug("Update", "Failed to check for updates", e);
                 if (sender != null) {
                     sender.sendMessage(plugin.getLanguageManager().getMessage("update-error"));
                 } else {

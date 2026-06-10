@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.listeners;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import com.fabian.xsetspawn.managers.ManagerConfig;
 import com.fabian.xsetspawn.managers.Permission;
 import com.fabian.xsetspawn.managers.SpawnManager;
@@ -29,6 +30,7 @@ public class PlayerListener implements Listener {
     public void onFirstJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         boolean teleported = false;
+        DebugLogger.debug("Listener", "PlayerJoinEvent: " + player.getName() + " (firstJoin=" + !player.hasPlayedBefore() + ")");
 
         if (config.teleportOnFirstJoin && !player.hasPlayedBefore()) {
             if (config.firstJoinSpawnEnabled) {
@@ -60,6 +62,7 @@ public class PlayerListener implements Listener {
     public void onDeath(PlayerRespawnEvent event) {
         if (config.teleportOnDeath) {
             Player player = event.getPlayer();
+            DebugLogger.debug("Listener", "PlayerRespawnEvent: " + player.getName() + " in " + player.getWorld().getName());
             
             // Smart Respawn Check
             if (config.smartRespawn) {
@@ -121,6 +124,7 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onPlayerQuit(org.bukkit.event.player.PlayerQuitEvent event) {
+        DebugLogger.debug("Listener", "PlayerQuitEvent: " + event.getPlayer().getName() + " - cleaning up data");
         java.util.UUID uuid = event.getPlayer().getUniqueId();
         plugin.getDelayManager().cancelTeleport(event.getPlayer());
         plugin.getBackManager().clearLocation(uuid);

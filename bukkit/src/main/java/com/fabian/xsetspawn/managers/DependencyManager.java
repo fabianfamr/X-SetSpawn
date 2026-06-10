@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.managers;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import net.byteflux.libby.BukkitLibraryManager;
 import net.byteflux.libby.Library;
 
@@ -30,18 +31,23 @@ public class DependencyManager {
 
     public void loadDependencies() {
         String storageType = plugin.getConfigManager().getConfig().getString("storage.type", "YAML").toUpperCase();
+        DebugLogger.debug("Dependency", "Loading dependencies for storage type: " + storageType);
 
         try {
             plugin.getLogger().info("Loading runtime dependencies via X-API...");
             loadAdventureDependencies();
+            DebugLogger.debug("Dependency", "Adventure dependencies loaded");
 
             if (storageType.equals("MONGODB") || storageType.equals("MONGO")) {
+                DebugLogger.debug("Dependency", "Loading MongoDB dependencies...");
                 loadMongoDependencies();
             } else if (storageType.equals("SQL") || storageType.equals("MYSQL") || storageType.equals("MARIADB") || storageType.equals("H2")) {
+                DebugLogger.debug("Dependency", "Loading SQL dependencies for type: " + storageType);
                 loadSqlDependencies(storageType);
             }
             plugin.getLogger().info("All dependencies loaded successfully!");
         } catch (Exception e) {
+            DebugLogger.debug("Dependency", "Failed to load runtime database libraries!", e);
             plugin.logError("Failed to load runtime database libraries! " + e.getMessage());
         }
     }

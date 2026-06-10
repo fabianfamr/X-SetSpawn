@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.hooks;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -18,14 +19,17 @@ public class VaultHook {
 
     private void setupEconomy() {
         if (plugin.getServer().getPluginManager().getPlugin("Vault") == null) {
+            DebugLogger.debug("Vault", "Vault plugin not found");
             return;
         }
         RegisteredServiceProvider<Economy> rsp = plugin.getServer().getServicesManager().getRegistration(Economy.class);
         if (rsp == null) {
+            DebugLogger.debug("Vault", "Vault found but no Economy provider registered");
             return;
         }
         econ = rsp.getProvider();
         setup = econ != null;
+        DebugLogger.debug("Vault", "Economy hook " + (setup ? "successfully setup" : "failed (provider was null)"));
     }
 
     public boolean isSetup() {

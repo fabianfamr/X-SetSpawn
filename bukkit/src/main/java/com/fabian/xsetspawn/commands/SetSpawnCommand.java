@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.commands;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import com.fabian.xsetspawn.managers.ManagerConfig;
 import com.fabian.xsetspawn.managers.Permission;
 import com.fabian.xsetspawn.managers.LanguageManager;
@@ -33,8 +34,10 @@ public class SetSpawnCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        DebugLogger.debug("Command", "/setspawn executed by " + sender.getName() + " with args: " + java.util.Arrays.toString(args));
         // Permission check
         if (!Permission.SETSPAWN.has(sender)) {
+            DebugLogger.debug("Command", "Permission denied for /setspawn: " + sender.getName());
             sender.sendMessage(languageManager.getMessage("no-permission"));
             return true;
         }

@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.managers.storage;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
@@ -60,6 +61,7 @@ public class MongoStorage implements SpawnStorage {
     public MongoStorage(XSetSpawn plugin, String uri, String dbName, String collectionName) {
         this.plugin = plugin;
         silenceMongoLogs();
+        DebugLogger.debug("Storage", "Initializing MongoDB storage (db=" + dbName + ", collection=" + collectionName + ")...");
 
         // Fix for Minecraft PluginClassLoader isolation issues with MongoDB ServiceLoader
         ClassLoader originalLoader = Thread.currentThread().getContextClassLoader();
@@ -74,6 +76,7 @@ public class MongoStorage implements SpawnStorage {
                 // Ping to verify connection and auth immediately, instead of lazy connecting.
                 this.database.runCommand(new Document("ping", 1));
                 
+                DebugLogger.debug("Storage", "MongoDB connected and ready");
                 plugin.log("&aMONGODB database connected and ready.");
                 ready = true;
 
@@ -82,6 +85,7 @@ public class MongoStorage implements SpawnStorage {
                     plugin.getSpawnManager().loadCachesAsync();
                 }
             } catch (Exception e) {
+                DebugLogger.debug("Storage", "Failed to initialize MongoDB connection", e);
                 plugin.logError("Failed to initialize MongoDB connection: " + e.getMessage());
                 e.printStackTrace();
             } finally {
@@ -92,6 +96,7 @@ public class MongoStorage implements SpawnStorage {
 
     @Override
     public CompletableFuture<Void> save(String id, Location location) {
+        DebugLogger.debug("Storage", "MongoDB save: " + id);
         return CompletableFuture.supplyAsync(() -> {
             if (!ready || collection == null) return null;
             try {
@@ -113,6 +118,7 @@ public class MongoStorage implements SpawnStorage {
 
     @Override
     public CompletableFuture<Location> load(String id) {
+        DebugLogger.debug("Storage", "MongoDB load: " + id);
         return CompletableFuture.supplyAsync(() -> {
             if (!ready || collection == null) return null;
             try {
@@ -180,6 +186,7 @@ public class MongoStorage implements SpawnStorage {
 
     @Override
     public CompletableFuture<java.util.Map<String, Location>> loadAll() {
+        DebugLogger.debug("Storage", "MongoDB loadAll: loading all spawns...");
         return CompletableFuture.supplyAsync(() -> {
             java.util.Map<String, Location> map = new java.util.HashMap<>();
             if (!ready || collection == null) return map;
@@ -207,6 +214,7 @@ public class MongoStorage implements SpawnStorage {
 
     @Override
     public void close() {
+        DebugLogger.debug("Storage", "Closing MongoDB connection...");
         if (mongoClient != null) {
             mongoClient.close();
         }

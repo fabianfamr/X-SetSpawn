@@ -2,6 +2,7 @@ package com.fabian.xsetspawn.managers;
 
 import com.fabian.xsetspawn.XSetSpawn;
 import com.fabian.xsetspawn.managers.storage.SpawnStorage;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import com.fabian.xsetspawn.utils.VisualUtil;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -27,6 +28,7 @@ public class SpawnManager {
         this.config = plugin.getManagerConfig();
         this.storage = plugin.getStorageManager().getStorage();
         this.cachedFireworkColor = resolveColorByName(config.fireworksColor);
+        DebugLogger.debug("SpawnManager", "Initialized (perWorld=" + config.perWorld + ", namedSpawns=" + config.namedSpawns + ")");
         // loadCaches() is now called asynchronously by the storage backends once connected.
     }
 
@@ -48,6 +50,7 @@ public class SpawnManager {
     }
 
     public void loadCachesAsync(Runnable callback) {
+        DebugLogger.debug("SpawnManager", "Loading spawn caches asynchronously...");
         storage.loadAll().thenAccept(allSpawns -> {
             org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
                 if (allSpawns != null) {
@@ -66,6 +69,7 @@ public class SpawnManager {
 
     public void setSpawn(Location location) {
         String id = getSpawnId(location.getWorld());
+        DebugLogger.debug("SpawnManager", "Setting spawn: " + id + " at " + location.getWorld().getName() + " (" + (int)location.getX() + ", " + (int)location.getY() + ", " + (int)location.getZ() + ")");
         spawnCache.put(id, location);
         storage.save(id, location).exceptionally(ex -> {
             plugin.logError("Failed to save spawn " + id + ": " + ex.getMessage());
@@ -108,6 +112,7 @@ public class SpawnManager {
 
     public void setNamedSpawn(String name, Location location) {
         String id = getNamedSpawnId(name);
+        DebugLogger.debug("SpawnManager", "Setting named spawn: " + id + " at " + location.getWorld().getName());
         spawnCache.put(id, location);
         storage.save(id, location).exceptionally(ex -> {
             plugin.logError("Failed to save named spawn " + id + ": " + ex.getMessage());
@@ -129,12 +134,14 @@ public class SpawnManager {
 
     public void removeNamedSpawn(String name) {
         String id = getNamedSpawnId(name);
+        DebugLogger.debug("SpawnManager", "Removing named spawn: " + id);
         spawnCache.remove(id);
         storage.remove(id);
     }
 
     public void removeSpawn(World world) {
         String id = getSpawnId(world);
+        DebugLogger.debug("SpawnManager", "Removing spawn: " + id);
         spawnCache.remove(id);
         storage.remove(id);
     }
@@ -202,6 +209,7 @@ public class SpawnManager {
     }
 
     public void setFirstJoinSpawn(Location location) {
+        DebugLogger.debug("SpawnManager", "Setting first-join spawn at " + location.getWorld().getName());
         spawnCache.put("first-join-spawn", location);
         storage.save("first-join-spawn", location).exceptionally(ex -> {
             plugin.logError("Failed to save first-join spawn: " + ex.getMessage());

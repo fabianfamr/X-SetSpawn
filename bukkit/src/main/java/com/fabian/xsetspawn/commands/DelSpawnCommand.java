@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.commands;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import com.fabian.xsetspawn.managers.LanguageManager;
 import com.fabian.xsetspawn.managers.Permission;
 import org.bukkit.command.Command;
@@ -24,6 +25,7 @@ public class DelSpawnCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        DebugLogger.debug("Command", "/delspawn executed by " + sender.getName() + " with args: " + java.util.Arrays.toString(args));
         if (!Permission.DELSPAWN.has(sender)) {
             sender.sendMessage(languageManager.getMessage("no-permission"));
             return true;

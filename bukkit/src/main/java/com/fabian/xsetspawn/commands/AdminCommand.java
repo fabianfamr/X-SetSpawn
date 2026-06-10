@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.commands;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.DebugLogger;
 import com.fabian.xsetspawn.managers.LanguageManager;
 import com.fabian.xsetspawn.managers.ManagerConfig;
 import com.fabian.xsetspawn.managers.Permission;
@@ -29,6 +30,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        DebugLogger.debug("Command", "/xsetspawn executed by " + sender.getName() + " with subcommand: " + (args.length > 0 ? args[0] : "none"));
         if (!Permission.ADMIN.has(sender)) {
             sender.sendMessage(languageManager.getMessage("no-permission"));
             return true;
@@ -48,6 +50,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
                     sender.sendMessage(languageManager.getMessage("no-permission"));
                     return true;
                 }
+                DebugLogger.debug("Command", "Reloading plugin configuration...");
                 config.reload();
                 plugin.getConfigManager().reloadConfiguration();
                 plugin.getLanguageManager().reloadLanguage();

@@ -1,5 +1,6 @@
 package com.fabian.xsetspawn.logic;
 
+import com.fabian.xsetspawn.utils.DebugLogger;
 import org.bukkit.entity.Player;
 import java.util.Map;
 import java.util.UUID;
@@ -12,6 +13,7 @@ public class CooldownManager {
     public void setCooldown(Player player, int seconds) {
         long expireTime = System.currentTimeMillis() + (seconds * 1000L);
         cooldowns.put(player.getUniqueId(), expireTime);
+        DebugLogger.debug("Cooldown", "Set cooldown for " + player.getName() + ": " + seconds + "s");
     }
 
     public boolean isOnCooldown(Player player) {
@@ -28,6 +30,7 @@ public class CooldownManager {
     }
 
     public void removeCooldown(Player player) {
+        DebugLogger.debug("Cooldown", "Removed cooldown for " + player.getName());
         cooldowns.remove(player.getUniqueId());
     }
 
