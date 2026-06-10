@@ -12,6 +12,25 @@
     <name>X-SetSpawn</name>
     <description>The ultimate spawn management plugin for Bukkit, Velocity and BungeeCord.</description>
 
+    <url>https://github.com/fabianfamr/X-SetSpawn</url>
+    <inceptionYear>2024</inceptionYear>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>fabianfamr</id>
+            <name>Fabian</name>
+            <url>https://github.com/fabianfamr</url>
+        </developer>
+    </developers>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
