@@ -639,8 +639,6 @@ public class XSetSpawnVelocity {
                     // Legacy keys: ignore but don't crash
                     case "target-server":
                         break;
-                    case "connect-on-first-join":
-                        break;
                 }
             }
         }

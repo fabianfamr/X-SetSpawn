@@ -614,8 +614,6 @@ public class XSetSpawnBungee extends Plugin implements Listener {
                     // Legacy key: ignore but don't crash
                     case "target-server":
                         break;
-                    case "connect-on-first-join":
-                        break;
                 }
             }
         }
