@@ -1,83 +1,67 @@
 name: X-SetSpawn
 version: 2.3
 main: com.fabian.xsetspawn.XSetSpawn
-api-version: "1.13"
+api-version: 1.13
 folia-supported: true
 authors: [Fabian]
-description: "The ultimate spawn management plugin for Paper, Purpur, Folia & Bukkit (1.8.8 - 26.1+)."
 website: https://xproyects.qzz.io
+description: "The ultimate spawn management plugin for Paper, Purpur, Folia & Bukkit (1.8.8+)."
+softdepend: [PlaceholderAPI, Vault]
 
 commands:
   spawn:
-    description: Teleport to the server spawn point.
+    description: Teleport to the server spawn point
     usage: /spawn
-    aliases: []
-
   setspawn:
-    description: Set the spawn point at your current location.
+    description: Set the spawn point at your current location
     usage: /setspawn
     aliases: [ss]
-
   xsetspawn:
-    description: Main admin command for X-SetSpawn.
+    description: Main admin command for X-SetSpawn
     usage: /xsetspawn <reload|update|version|help|delspawn|setspawn>
     aliases: [xss]
-
   delspawn:
-    description: Delete a named spawn point.
+    description: Delete a named spawn point
     usage: /delspawn <name>
     aliases: [removespawn, ds]
-
   back:
-    description: Return to your previous location before using /spawn.
+    description: Return to your previous location
     usage: /back
-    aliases: []
 
 permissions:
   xsetspawn.spawn:
-    description: Allows using /spawn to teleport to spawn.
+    description: Allows using /spawn to teleport to spawn
     default: true
-
   xsetspawn.setspawn:
-    description: Allows using /setspawn to set the spawn point.
+    description: Allows using /setspawn to set the spawn point
     default: op
-
   xsetspawn.delspawn:
-    description: Allows using /delspawn to delete a named spawn point.
+    description: Allows using /delspawn to delete a named spawn point
     default: op
-    
   xsetspawn.admin:
-    description: Full admin access and update notifications on join.
+    description: Full admin access and update notifications on join
     default: op
-
   xsetspawn.reload:
-    description: Allows reloading the plugin configuration with /xss reload.
+    description: Allows reloading the plugin configuration
     default: op
-
   xsetspawn.update:
-    description: Allows checking for plugin updates with /xss update.
+    description: Allows checking for plugin updates
     default: op
-
   xsetspawn.bypass.cooldown:
-    description: Bypass the /spawn cooldown.
+    description: Bypass the /spawn cooldown
     default: op
-
   xsetspawn.bypass.delay:
-    description: Bypass the teleport countdown delay.
+    description: Bypass the teleport countdown delay
     default: op
-
   xsetspawn.bypass.economy:
-    description: Teleport to spawn for free, ignoring economy cost.
+    description: Teleport to spawn for free
     default: op
-
   xsetspawn.locate:
-    description: Allows viewing available languages with /xss locate.
+    description: Allows viewing available languages
     default: op
-
   xsetspawn.back:
-    description: Allows using /back to return to the previous location.
+    description: Allows using /back
     default: true
-
   xsetspawn.spawn-on-join:
-    description: Allows teleporting to spawn on join.
+    description: Allows teleporting to spawn on join
     default: false

@@ -15,7 +15,7 @@
 
 # Internal config version. DO NOT CHANGE!
 # If this is lower than the plugin's version, the config will auto-update.
-config-code: 7
+code: 7
 
 # Plugin language.
 # Available: ES (Spanish), EN (English), JA (Japanese), PT (Portuguese), RU (Russian), CUSTOM

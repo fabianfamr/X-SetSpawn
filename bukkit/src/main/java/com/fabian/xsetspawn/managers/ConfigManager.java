@@ -24,13 +24,13 @@ public class ConfigManager {
         plugin.reloadConfig();
         this.config = plugin.getConfig();
 
-        // 1.5 Update Logic: Check "config-code"
-        int currentCode = config.getInt("config-code", 0);
+        // 1.5 Update Logic: Check "code"
+        int currentCode = config.getInt("code", 0);
         
         InputStream defaultStream = plugin.getResource("config.yml");
         if (defaultStream != null) {
             YamlConfiguration defaultConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(defaultStream));
-            int newCode = defaultConfig.getInt("config-code", 0);
+            int newCode = defaultConfig.getInt("code", 0);
             
             if (currentCode < newCode) {
                 plugin.log("&7Found a newer configuration version! &f(&e" + currentCode + " &7-> &a" + newCode + "&f)");
@@ -98,8 +98,8 @@ public class ConfigManager {
                     
                     String fullPath = String.join(".", path);
                     
-                    if (fullPath.equals("config-code")) {
-                        outLines.add(line); // Keep the updated config-code from the jar
+                    if (fullPath.equals("code")) {
+                        outLines.add(line); // Keep the updated code from the jar
                     } else if (currentConfig.contains(fullPath) && !currentConfig.isConfigurationSection(fullPath)) {
                         Object val = currentConfig.get(fullPath);
                         String valStr = formatValue(val);
