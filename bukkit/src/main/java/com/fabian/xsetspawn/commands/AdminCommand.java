@@ -5,7 +5,7 @@ import com.fabian.xsetspawn.utils.DebugLogger;
 import com.fabian.xsetspawn.managers.LanguageManager;
 import com.fabian.xsetspawn.managers.ManagerConfig;
 import com.fabian.xsetspawn.managers.Permission;
-import com.fabian.xsetspawn.utils.TextUtil;
+import com.fabian.xsetspawn.utils.ColorUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -140,8 +140,8 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
             String current = languageManager.getCurrentLanguage();
             java.util.List<String> available = languageManager.getAvailableLanguages();
             sender.sendMessage(languageManager.getMessageUnprefixed("locate-usage"));
-            sender.sendMessage(TextUtil.formatToLegacy("&7Current: &f" + current));
-            sender.sendMessage(TextUtil.formatToLegacy("&7Available: &f" + String.join(", ", available)));
+            sender.sendMessage(ColorUtils.formatToLegacy("&7Current: &f" + current));
+            sender.sendMessage(ColorUtils.formatToLegacy("&7Available: &f" + String.join(", ", available)));
             return;
         }
 
@@ -153,7 +153,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
         } else {
             java.util.List<String> available = languageManager.getAvailableLanguages();
             sender.sendMessage(languageManager.getMessage("locate-not-found", newLang));
-            sender.sendMessage(TextUtil.formatToLegacy("&7Available: &f" + String.join(", ", available)));
+            sender.sendMessage(ColorUtils.formatToLegacy("&7Available: &f" + String.join(", ", available)));
         }
     }
 

@@ -1,7 +1,7 @@
 package com.fabian.xsetspawn.managers;
 
 import com.fabian.xsetspawn.XSetSpawn;
-import com.fabian.xsetspawn.utils.TextUtil;
+import com.fabian.xsetspawn.utils.ColorUtils;
 import com.fabian.xsetspawn.utils.DebugLogger;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -46,7 +46,7 @@ public class LanguageManager {
             }
         }
         deleteDirectory(oldFolder);
-        plugin.log("&eMigrated old languages/ folder to messages/");
+        plugin.logInfo("Migrated old languages/ folder to messages/");
     }
 
     private void deleteDirectory(File dir) {
@@ -178,7 +178,7 @@ public class LanguageManager {
             message = MessageFormat.format(message, args);
         }
 
-        return TextUtil.formatToLegacy(prefix + message);
+        return ColorUtils.formatToLegacy(prefix + message);
     }
 
     public String getMessage(Player player, String key, Object... args) {
@@ -193,14 +193,14 @@ public class LanguageManager {
         String message = languageConfig.getString(key);
 
         if (message == null) {
-            return TextUtil.formatToLegacy("&cMissing message: " + key);
+            return ColorUtils.formatToLegacy("&cMissing message: " + key);
         }
 
         if (args.length > 0) {
             message = MessageFormat.format(message, args);
         }
 
-        return TextUtil.formatToLegacy(message);
+        return ColorUtils.formatToLegacy(message);
     }
 
     public String getMessageUnprefixed(Player player, String key, Object... args) {
@@ -229,14 +229,14 @@ public class LanguageManager {
             fullMessage = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, fullMessage);
         }
 
-        return TextUtil.format(fullMessage);
+        return ColorUtils.format(fullMessage);
     }
 
     public net.kyori.adventure.text.Component getMessageComponentUnprefixed(Player player, String key, Object... args) {
         String message = languageConfig.getString(key);
 
         if (message == null) {
-            return TextUtil.format("&cMissing message: " + key);
+            return ColorUtils.format("&cMissing message: " + key);
         }
 
         if (args.length > 0) {
@@ -247,7 +247,7 @@ public class LanguageManager {
             message = me.clip.placeholderapi.PlaceholderAPI.setPlaceholders(player, message);
         }
 
-        return TextUtil.format(message);
+        return ColorUtils.format(message);
     }
 
     private String saveResourceIfNotExists(String resourcePath) {
@@ -296,6 +296,6 @@ public class LanguageManager {
                 message = "&cMissing message: " + key;
                 break;
         }
-        return TextUtil.formatToLegacy(message);
+        return ColorUtils.formatToLegacy(message);
     }
 }

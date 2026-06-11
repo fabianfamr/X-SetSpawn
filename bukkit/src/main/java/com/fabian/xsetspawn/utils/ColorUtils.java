@@ -14,7 +14,7 @@ import org.bukkit.entity.Player;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class TextUtil {
+public class ColorUtils {
 
     private static final MiniMessage MINI_MESSAGE;
     private static final LegacyComponentSerializer LEGACY_SERIALIZER;

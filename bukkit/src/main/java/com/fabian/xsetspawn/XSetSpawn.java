@@ -314,11 +314,15 @@ public class XSetSpawn extends JavaPlugin implements Listener {
         }
     }
 
-    public void log(String message) {
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&8[&bX-SetSpawn&8] &7" + message));
+    public void logInfo(String message) {
+        getLogger().info(message);
+    }
+
+    public void logWarning(String message) {
+        getLogger().warning(message);
     }
 
     public void logError(String message) {
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&8[&bX-SetSpawn&8] &c" + message));
+        getLogger().severe(message);
     }
 }

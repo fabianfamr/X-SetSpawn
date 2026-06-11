@@ -11,7 +11,7 @@ import com.fabian.xsetspawn.managers.SpawnManager;
 import com.fabian.xsetspawn.hooks.VaultHook;
 import com.fabian.xsetspawn.hooks.CombatHook;
 import com.fabian.xsetspawn.utils.SchedulerUtil;
-import com.fabian.xsetspawn.utils.TextUtil;
+import com.fabian.xsetspawn.utils.ColorUtils;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;

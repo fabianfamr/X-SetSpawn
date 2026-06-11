@@ -37,7 +37,7 @@ public class SpawnManager {
      */
     @Deprecated
     public void loadCaches() {
-        plugin.log("&eWarning: loadCaches() called on main thread. Use loadCachesAsync().");
+        plugin.logWarning("loadCaches() called on main thread. Use loadCachesAsync().");
         spawnCache.clear();
         java.util.Map<String, Location> allSpawns = storage.loadAll().join();
         if (allSpawns != null) {
@@ -59,7 +59,7 @@ public class SpawnManager {
                 } else {
                     spawnCache.clear();
                 }
-                plugin.log("&aLoaded " + spawnCache.size() + " spawns.");
+                plugin.logInfo("Loaded " + spawnCache.size() + " spawns.");
                 if (callback != null) {
                     callback.run();
                 }

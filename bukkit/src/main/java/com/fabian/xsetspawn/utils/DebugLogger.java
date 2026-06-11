@@ -10,7 +10,7 @@ import org.bukkit.ChatColor;
  */
 public final class DebugLogger {
 
-    private static final String PREFIX = "&8[&bX-SetSpawn&8] &b[DEBUG] &7";
+    private static final String PREFIX = "&8[&bDEBUG&8]&r &7";
 
     private DebugLogger() {
         // Static utility class — no instances
@@ -40,7 +40,7 @@ public final class DebugLogger {
 
     /**
      * Logs a debug message with a category prefix.
-     * Output format: [DEBUG][Category] message
+     * Output format: [DEBUG] [Category] message
      *
      * @param category the category label (e.g. "SpawnManager", "Command")
      * @param message  the message to log
@@ -48,7 +48,7 @@ public final class DebugLogger {
     public static void debug(String category, String message) {
         if (!isDebugEnabled()) return;
         Bukkit.getConsoleSender().sendMessage(
-                ChatColor.translateAlternateColorCodes('&', PREFIX + "&b[" + category + "&b] &7" + message));
+                ChatColor.translateAlternateColorCodes('&', PREFIX + "[" + category + "] " + message));
     }
 
     /**
@@ -61,7 +61,7 @@ public final class DebugLogger {
     public static void debug(String category, String message, Throwable throwable) {
         if (!isDebugEnabled()) return;
         Bukkit.getConsoleSender().sendMessage(
-                ChatColor.translateAlternateColorCodes('&', PREFIX + "&b[" + category + "&b] &7" + message));
+                ChatColor.translateAlternateColorCodes('&', PREFIX + "[" + category + "] " + message));
         if (throwable != null) {
             throwable.printStackTrace();
         }

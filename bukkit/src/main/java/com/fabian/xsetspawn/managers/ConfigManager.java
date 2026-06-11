@@ -36,7 +36,7 @@ public class ConfigManager {
             
             if (currentCode < newCode) {
                 DebugLogger.debug("Config", "Config update detected: " + currentCode + " -> " + newCode);
-                plugin.log("&7Found a newer configuration version! &f(&e" + currentCode + " &7-> &a" + newCode + "&f)");
+                plugin.logInfo("Found a newer configuration version! (" + currentCode + " -> " + newCode + ")");
                 backupConfig();
                 rebuildConfig();
                 plugin.reloadConfig();
@@ -56,7 +56,7 @@ public class ConfigManager {
             File configFile = new File(plugin.getDataFolder(), "config.yml");
             File backupFile = new File(plugin.getDataFolder(), "config_old.yml");
             java.nio.file.Files.copy(configFile.toPath(), backupFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-            plugin.log("&7A backup of your current config has been created: &e" + backupFile.getName());
+            plugin.logInfo("A backup of your current config has been created: " + backupFile.getName());
         } catch (Exception e) {
             plugin.getLogger().warning("Could not create config backup: " + e.getMessage());
         }

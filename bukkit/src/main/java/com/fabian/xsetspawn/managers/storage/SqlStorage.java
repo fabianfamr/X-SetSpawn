@@ -80,7 +80,7 @@ public class SqlStorage implements SpawnStorage {
     private void setupDataSource(String type, String host, int port, String database, String username, String password) {
         silenceHikariLogs();
 
-        plugin.log("&eConnecting to " + type + " database...");
+        plugin.logInfo("Connecting to " + type + " database...");
 
         HikariConfig config = new HikariConfig();
 
@@ -103,7 +103,7 @@ public class SqlStorage implements SpawnStorage {
         config.setPoolName("XSetSpawnPool");
 
         this.dataSource = new HikariDataSource(config);
-        plugin.log("&a" + type + " database connected and ready.");
+        plugin.logInfo(type + " database connected and ready.");
     }
 
     private void createTable() {
