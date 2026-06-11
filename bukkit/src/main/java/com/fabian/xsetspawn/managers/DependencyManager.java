@@ -5,10 +5,6 @@ import com.fabian.xsetspawn.utils.DebugLogger;
 import net.byteflux.libby.BukkitLibraryManager;
 import net.byteflux.libby.Library;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 public class DependencyManager {
 
     private final XSetSpawn plugin;
@@ -16,14 +12,7 @@ public class DependencyManager {
 
     public DependencyManager(XSetSpawn plugin) {
         this.plugin = plugin;
-        try {
-            Path xapiPath = Paths.get(plugin.getDataFolder().getParent(), "X-API");
-            Files.createDirectories(xapiPath);
-            this.libraryManager = new BukkitLibraryManager(plugin, xapiPath);
-        } catch (Exception e) {
-            plugin.getLogger().warning("Could not create X-API directory, using default: " + e.getMessage());
-            this.libraryManager = new BukkitLibraryManager(plugin);
-        }
+        this.libraryManager = new BukkitLibraryManager(plugin);
         this.libraryManager.addMavenCentral();
         this.libraryManager.addSonatype();
         this.libraryManager.addRepository("https://repo.papermc.io/repository/maven-public/");
