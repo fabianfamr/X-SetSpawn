@@ -58,8 +58,8 @@ public class DependencyManager {
             }
             plugin.getLogger().info("All dependencies loaded successfully!");
         } catch (Exception e) {
-            DebugLogger.debug("Dependency", "Failed to load runtime database libraries!", e);
-            plugin.logError("Failed to load runtime database libraries! " + e.getMessage());
+            plugin.getLogger().severe("Failed to load runtime database libraries! " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
