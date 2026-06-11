@@ -115,6 +115,15 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
                 handleLocateCommand(sender, args);
                 break;
 
+            case "debug":
+                boolean currentState = plugin.getManagerConfig().debugEnabled;
+                plugin.getManagerConfig().debugEnabled = !currentState;
+                plugin.getConfig().set("debug", plugin.getManagerConfig().debugEnabled);
+                plugin.saveConfig();
+                sender.sendMessage(ChatColor.translateAlternateColorCodes('&',
+                        "&8[&bX-SetSpawn&8] &7Debug mode: " + (plugin.getManagerConfig().debugEnabled ? "&aenabled" : "&cdisabled")));
+                break;
+
             case "help":
             case "h":
             case "?":
@@ -175,6 +184,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
             completions.add("version");
             completions.add("update");
             completions.add("import");
+            completions.add("debug");
 
             return completions.stream()
                     .filter(s -> s.toLowerCase().startsWith(args[0].toLowerCase()))
