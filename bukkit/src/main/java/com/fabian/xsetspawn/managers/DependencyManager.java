@@ -4,6 +4,11 @@ import com.fabian.xsetspawn.XSetSpawn;
 import com.fabian.xsetspawn.utils.DebugLogger;
 import net.byteflux.libby.BukkitLibraryManager;
 import net.byteflux.libby.Library;
+import net.byteflux.libby.LibraryManager;
+import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class DependencyManager {
 
@@ -13,9 +18,26 @@ public class DependencyManager {
     public DependencyManager(XSetSpawn plugin) {
         this.plugin = plugin;
         this.libraryManager = new BukkitLibraryManager(plugin);
+        setSharedLibraryPath();
         this.libraryManager.addMavenCentral();
         this.libraryManager.addSonatype();
         this.libraryManager.addRepository("https://repo.papermc.io/repository/maven-public/");
+    }
+
+    /**
+     * Redirects libby's save directory to plugins/X-API/ so all plugins
+     * share a single dependency folder instead of each having their own libs/.
+     */
+    private void setSharedLibraryPath() {
+        try {
+            Path sharedPath = Paths.get(plugin.getDataFolder().getParent(), "X-API");
+            Files.createDirectories(sharedPath);
+            Field field = LibraryManager.class.getDeclaredField("saveDirectory");
+            field.setAccessible(true);
+            field.set(libraryManager, sharedPath);
+        } catch (Exception e) {
+            plugin.getLogger().warning("Could not set shared library path (plugins/X-API/): " + e.getMessage());
+        }
     }
 
     public void loadDependencies() {
