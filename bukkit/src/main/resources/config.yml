@@ -1,4 +1,4 @@
-# ==============================================================================
+#
 #  __   __      _____      _    ____
 #  \ \ / /     / ____|    | |  / ___|
 #   \ V /_____| (___   ___| |_| (___  _ __   __ ___      _ _ __
@@ -7,11 +7,25 @@
 #  /_/ \_\    |_____/ \___|\__|_____/| .__/ \__,_| \_/\_/ |_| |_|
 #                                    | |
 #                                    |_|
-# ==============================================================================
-# X-SetSpawn | Developed by Fabian (X Proyects)
-# Discord: https://discord.gg/Yb6GsfGWmd
-# Supported versions: 1.8.8 - 26.1+
-# ==============================================================================
+#
+# ======================================================== #
+#    X-SetSpawn | Advanced Spawn Management Plugin for Minecraft #
+#    Author: Fabian | Web: https://xproyects.qzz.io               #
+# ======================================================== #
+#
+# Features:
+#   - Set spawn points per world or globally
+#   - Teleport delay, cooldown and combat check system
+#   - Vault economy integration for paid teleports
+#   - Visual effects: particles, sounds, titles, actionbar, bossbar, fireworks
+#   - Named spawns (/spawn vip, /spawn pvp, etc.)
+#   - Back command to return to last location
+#   - Void fall teleportation protection
+#   - Multiple storage backends: YAML, MySQL, MongoDB
+#   - BungeeCord/Velocity proxy support with cross-server communication
+#   - PlaceholderAPI expansion with 19+ spawn-related placeholders
+#
+# Supported versions: 1.8.8 - 26.1+ (Paper, Spigot, Folia)
 
 # Internal config version. DO NOT CHANGE!
 # If this is lower than the plugin's version, the config will auto-update.
