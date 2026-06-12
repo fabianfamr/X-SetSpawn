@@ -57,6 +57,16 @@ connect-on-first-join: true
 # Enable detailed debug logging in the proxy console?
 debug: false
 
+# ------------------------------------------------------------------------------
+# UPDATE CHECKER
+# Checks the SpigotMC API for new versions on startup.
+# ------------------------------------------------------------------------------
+updates:
+  # Check for updates when the proxy starts?
+  check: true
+  # Notify admins on join if an update exists?
+  notify-on-join: true
+
 # Enable anonymous plugin statistics via bStats?
 # https://bstats.org/plugin/bungeecord/X-SetSpawn/30831
 metrics: true

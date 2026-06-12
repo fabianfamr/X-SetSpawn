@@ -29,8 +29,15 @@ prefix: "&8[&bX-SetSpawn&8]&r "
 # false = One global /spawn point for the entire server
 per-world: false
 
-# Check for plugin updates on server startup?
-check-updates: true
+# ------------------------------------------------------------------------------
+# UPDATE CHECKER
+# Checks the SpigotMC API for new versions on startup.
+# ------------------------------------------------------------------------------
+updates:
+  # Check for updates when the server starts?
+  check: true
+  # Notify admins on join if an update exists?
+  notify-on-join: true
 
 # Enable anonymous plugin statistics via bStats?
 # https://bstats.org/plugin/bukkit/X-SetSpawn/30619

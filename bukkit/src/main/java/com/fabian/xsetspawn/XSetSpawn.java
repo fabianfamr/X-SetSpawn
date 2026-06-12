@@ -211,7 +211,7 @@ public class XSetSpawn extends JavaPlugin implements Listener {
         Player player = event.getPlayer();
 
         // Notify about updates if available
-        if (managerConfig.checkUpdates && updateChecker != null) {
+        if (managerConfig.notifyOnJoin && updateChecker != null) {
             if (Permission.ADMIN.has(player)) {
                 SchedulerUtil.runAsyncDelayed(this, () -> {
                     if (updateChecker.isUpdateAvailable()) {

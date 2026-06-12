@@ -15,6 +15,7 @@ public class ManagerConfig {
     public String prefix;
     public boolean perWorld;
     public boolean checkUpdates;
+    public boolean notifyOnJoin;
     public boolean metricsEnabled;
     public boolean debugEnabled;
 
@@ -118,7 +119,8 @@ public class ManagerConfig {
         this.language = config.getString("language", "en").toLowerCase();
         this.prefix = config.getString("prefix", "&8[&bX-SetSpawn&8]&r ");
         this.perWorld = config.getBoolean("per-world", false);
-        this.checkUpdates = config.getBoolean("check-updates", true);
+        this.checkUpdates = config.getBoolean("updates.check", true);
+        this.notifyOnJoin = config.getBoolean("updates.notify-on-join", true);
         this.metricsEnabled = config.getBoolean("metrics", true);
         this.debugEnabled = config.getBoolean("debug", false);
 

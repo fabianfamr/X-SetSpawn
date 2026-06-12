@@ -109,7 +109,9 @@ public class XSetSpawnBungee extends Plugin implements Listener {
         getProxy().getPluginManager().registerListener(this, this);
 
         // Check for updates
-        new UpdateChecker(this).checkForUpdates();
+        if (getConfig().getBoolean("updates.check", true)) {
+            new UpdateChecker(this).checkForUpdates();
+        }
 
         // 3. Initialize metrics
         this.metrics = new Metrics(this, 30831);

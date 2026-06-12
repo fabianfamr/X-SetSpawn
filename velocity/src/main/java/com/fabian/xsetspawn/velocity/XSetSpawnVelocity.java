@@ -139,7 +139,9 @@ public class XSetSpawnVelocity {
         server.getConsoleCommandSource().sendMessage(LEGACY.deserialize("&b----------------------------------------------"));
 
         // Check for updates
-        new UpdateChecker(this).checkForUpdates();
+        if (configuration.getBoolean("updates.check", true)) {
+            new UpdateChecker(this).checkForUpdates();
+        }
 
         // 3. Initialize metrics
         this.metrics = metricsFactory.make(this, 30833);
