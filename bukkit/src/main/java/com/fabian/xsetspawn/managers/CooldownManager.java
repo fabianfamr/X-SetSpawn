@@ -1,4 +1,4 @@
-package com.fabian.xsetspawn.logic;
+package com.fabian.xsetspawn.managers;
 
 import com.fabian.xsetspawn.utils.DebugLogger;
 import org.bukkit.entity.Player;

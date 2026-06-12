@@ -1,4 +1,4 @@
-package com.fabian.xsetspawn.logic;
+package com.fabian.xsetspawn.managers;
 
 import com.fabian.xsetspawn.XSetSpawn;
 import com.fabian.xsetspawn.managers.ManagerConfig;

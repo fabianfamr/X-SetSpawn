@@ -4,8 +4,8 @@ import com.fabian.xsetspawn.XSetSpawn;
 import com.fabian.xsetspawn.utils.DebugLogger;
 import com.fabian.xsetspawn.hooks.CombatHook;
 import com.fabian.xsetspawn.hooks.VaultHook;
-import com.fabian.xsetspawn.logic.CooldownManager;
-import com.fabian.xsetspawn.logic.DelayManager;
+import com.fabian.xsetspawn.managers.CooldownManager;
+import com.fabian.xsetspawn.managers.DelayManager;
 import com.fabian.xsetspawn.managers.BackManager;
 import com.fabian.xsetspawn.managers.LanguageManager;
 import com.fabian.xsetspawn.managers.ManagerConfig;
@@ -109,7 +109,7 @@ public class BackCommand implements CommandExecutor {
             // Delayed teleport with BACK event particles
             plugin.getDelayManager().scheduleTeleport(player, backLocation, effectiveDelay,
                     languageManager.getMessage("back-teleport"),
-                    com.fabian.xsetspawn.logic.DelayManager.TeleportEvent.BACK);
+                    com.fabian.xsetspawn.managers.DelayManager.TeleportEvent.BACK);
         } else {
             // Instant teleport
             SchedulerUtil.teleport(plugin, player, backLocation, () -> {
