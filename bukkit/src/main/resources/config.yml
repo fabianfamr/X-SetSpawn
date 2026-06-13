@@ -265,3 +265,11 @@ bossbar:
   color: "BLUE"
   # Styles: SOLID, SEGMENTED_6, SEGMENTED_10, SEGMENTED_12, SEGMENTED_20
   style: "SOLID"
+
+# Show a floating hologram above the player during teleport countdown.
+# Only supports legacy color codes (&a, &e, etc.) in text.
+# Use {0} placeholder for remaining seconds.
+holograms:
+  enabled: false
+  text: "&aTeleporting in &e{0} &aseconds..."
+  height-offset: 2.5

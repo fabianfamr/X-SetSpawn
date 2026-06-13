@@ -104,7 +104,7 @@ public class DelayManager implements Listener {
                     }
                     if (bossBar != null) {
                         bossBar.setProgress((double) timeLeft / seconds);
-                        bossBar.setTitle(plugin.getLanguageManager().getMessageUnprefixed("actionbar-teleporting", timeLeft).replace("&", "§"));
+                        bossBar.setTitle(plugin.getLanguageManager().getMessageUnprefixed("actionbar-teleporting", timeLeft));
                     }
                     if (useHolo) {
                         HologramUtil.updateHologram(player, config.hologramText.replace("{0}", String.valueOf(timeLeft)));
@@ -180,7 +180,7 @@ public class DelayManager implements Listener {
         try {
             BarColor color = BarColor.valueOf(config.bossbarColor);
             BarStyle style = BarStyle.valueOf(config.bossbarStyle);
-            BossBar bar = Bukkit.createBossBar(plugin.getLanguageManager().getMessageUnprefixed("actionbar-teleporting", seconds).replace("&", "§"), color, style);
+            BossBar bar = Bukkit.createBossBar(plugin.getLanguageManager().getMessageUnprefixed("actionbar-teleporting", seconds), color, style);
             bar.addPlayer(player);
             return bar;
         } catch (Throwable t) {
@@ -198,6 +198,18 @@ public class DelayManager implements Listener {
 
     public boolean isPending(Player player) {
         return pendingTeleports.containsKey(player.getUniqueId());
+    }
+
+    /**
+     * Cancel all pending teleports and clean up their resources (bossbars, holograms, particles).
+     * Should be called on reload to prevent stale visual effects.
+     */
+    public void cancelAllPendingTeleports() {
+        for (Map.Entry<UUID, TeleportSession> entry : pendingTeleports.entrySet()) {
+            entry.getValue().cancel();
+            DebugLogger.debug("DelayManager", "Cancelled pending teleport for UUID " + entry.getKey() + " during reload");
+        }
+        pendingTeleports.clear();
     }
 
     @EventHandler

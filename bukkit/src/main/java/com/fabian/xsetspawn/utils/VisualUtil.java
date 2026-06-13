@@ -73,7 +73,7 @@ public class VisualUtil {
             if (title != null) {
                 Object enumTitle = getNMSClass("PacketPlayOutTitle$EnumTitleAction").getField("TITLE").get(null);
                 Object titleChat = getNMSClass("IChatBaseComponent$ChatSerializer").getMethod("a", String.class)
-                        .invoke(null, "{\"text\":\"" + escapeJson(title.replace("&", "§")) + "\"}");
+                        .invoke(null, "{\"text\":\"" + escapeJson(title) + "\"}");
                 Object titlePacket = getNMSClass("PacketPlayOutTitle").getConstructor(enumTitle.getClass(), getNMSClass("IChatBaseComponent"))
                         .newInstance(enumTitle, titleChat);
                 sendPacket(player, titlePacket);
@@ -83,7 +83,7 @@ public class VisualUtil {
             if (subtitle != null) {
                 Object enumSubtitle = getNMSClass("PacketPlayOutTitle$EnumTitleAction").getField("SUBTITLE").get(null);
                 Object subtitleChat = getNMSClass("IChatBaseComponent$ChatSerializer").getMethod("a", String.class)
-                        .invoke(null, "{\"text\":\"" + escapeJson(subtitle.replace("&", "§")) + "\"}");
+                        .invoke(null, "{\"text\":\"" + escapeJson(subtitle) + "\"}");
                 Object subtitlePacket = getNMSClass("PacketPlayOutTitle").getConstructor(enumSubtitle.getClass(), getNMSClass("IChatBaseComponent"))
                         .newInstance(enumSubtitle, subtitleChat);
                 sendPacket(player, subtitlePacket);

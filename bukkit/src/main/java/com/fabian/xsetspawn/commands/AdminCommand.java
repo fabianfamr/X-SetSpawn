@@ -51,6 +51,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 DebugLogger.debug("Command", "Reloading plugin configuration...");
+                plugin.getDelayManager().cancelAllPendingTeleports();
                 config.reload();
                 plugin.getConfigManager().reloadConfiguration();
                 plugin.getLanguageManager().reloadLanguage();
