@@ -246,7 +246,7 @@ bossbar:
   style: "SOLID"
 
 # Show a floating hologram above the player during teleport countdown.
-# Compatible with: DecentHolograms (FancyHolograms), HolographicDisplays, or built-in ArmorStand fallback.
+# Compatible with: FancyHolograms, HolographicDisplays, or built-in ArmorStand fallback.
 # Only supports legacy color codes (&a, &e, etc.) in text.
 # Use {0} placeholder for remaining seconds.
 holograms:
