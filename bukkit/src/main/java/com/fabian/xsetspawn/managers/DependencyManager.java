@@ -45,7 +45,7 @@ public class DependencyManager {
         DebugLogger.debug("Dependency", "Loading dependencies for storage type: " + storageType);
 
         try {
-            plugin.getLogger().info("Loading runtime dependencies via X-API...");
+            plugin.logInfo("&fLoading runtime dependencies via &bX-API&f...");
             loadAdventureDependencies();
             DebugLogger.debug("Dependency", "Adventure dependencies loaded");
 
@@ -56,9 +56,9 @@ public class DependencyManager {
                 DebugLogger.debug("Dependency", "Loading SQL dependencies for type: " + storageType);
                 loadSqlDependencies(storageType);
             }
-            plugin.getLogger().info("All dependencies loaded successfully!");
+            plugin.logInfo("&aAll dependencies loaded successfully!");
         } catch (Exception e) {
-            plugin.getLogger().severe("Failed to load runtime database libraries! " + e.getMessage());
+            plugin.logError("&cFailed to load runtime database libraries! &f" + e.getMessage());
             e.printStackTrace();
         }
     }

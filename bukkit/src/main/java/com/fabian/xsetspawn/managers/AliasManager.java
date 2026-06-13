@@ -42,7 +42,7 @@ public class AliasManager {
         register("xsetspawn", adminAliases);
 
         if (!spawnAliases.isEmpty() || !setSpawnAliases.isEmpty() || !adminAliases.isEmpty()) {
-            plugin.logInfo("Custom command aliases registered from config.yml.");
+            plugin.logInfo("&aCustom command aliases registered from &fconfig.yml&a.");
         }
     }
 

@@ -68,7 +68,7 @@ public class MongoStorage implements SpawnStorage {
         com.fabian.xsetspawn.utils.SchedulerUtil.runAsync(plugin, () -> {
             try {
                 Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
-                plugin.logInfo("Connecting to MONGODB database...");
+                plugin.logInfo("&fConnecting to &bMONGODB&f database...");
                 this.mongoClient = MongoClients.create(uri);
                 this.database = mongoClient.getDatabase(dbName);
                 this.collection = database.getCollection(collectionName);
@@ -77,7 +77,7 @@ public class MongoStorage implements SpawnStorage {
                 this.database.runCommand(new Document("ping", 1));
                 
                 DebugLogger.debug("Storage", "MongoDB connected and ready");
-                plugin.logInfo("MONGODB database connected and ready.");
+                plugin.logInfo("&aMONGODB database connected and ready.");
                 ready = true;
 
                 // Trigger cache load once connected

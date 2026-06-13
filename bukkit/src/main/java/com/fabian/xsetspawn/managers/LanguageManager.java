@@ -46,7 +46,7 @@ public class LanguageManager {
             }
         }
         deleteDirectory(oldFolder);
-        plugin.logInfo("Migrated old languages/ folder to messages/");
+        plugin.logInfo("&eMigrated old &flanguages/&e folder to &fmessages/&e");
     }
 
     private void deleteDirectory(File dir) {

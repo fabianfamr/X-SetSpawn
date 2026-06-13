@@ -24,13 +24,13 @@ public class YamlStorage implements SpawnStorage {
     public YamlStorage(XSetSpawn plugin) {
         this.plugin = plugin;
         DebugLogger.debug("Storage", "Initializing YAML storage...");
-        plugin.logInfo("Connecting to YAML database...");
+        plugin.logInfo("&fConnecting to &bYAML&f database...");
         this.spawnsFolder = new File(plugin.getDataFolder(), "spawns");
         if (!spawnsFolder.exists()) {
             spawnsFolder.mkdirs();
         }
         migrateFromConfig();
-        plugin.logInfo("YAML database connected and ready.");
+        plugin.logInfo("&aYAML database connected and ready.");
     }
 
     /**
@@ -56,7 +56,7 @@ public class YamlStorage implements SpawnStorage {
         }
 
         if (migrated) {
-            plugin.logInfo("Migration of spawns completed successfully!");
+            plugin.logInfo("&aMigration of spawns completed successfully!");
         }
     }
 
@@ -67,7 +67,7 @@ public class YamlStorage implements SpawnStorage {
             if (key.equals("spawn") || key.startsWith("spawn-") || key.equals("first-join-spawn")) {
                 // Only attempt migration if it actually holds location data and wasn't already processed
                 if (config.contains(key + ".world") && !processedKeys.contains(key) && !isSet(key).join()) {
-                    plugin.logInfo("Migrating spawn '" + key + "' from " + fileName + "...");
+                    plugin.logInfo("&eMigrating spawn '&f" + key + "&e' from &f" + fileName + "&e...");
                     processedKeys.add(key); // Mark as processed to prevent redundant loops
                     Location loc = loadFromConfig(config, key);
                     if (loc != null) {

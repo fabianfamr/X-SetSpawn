@@ -59,7 +59,7 @@ public class SpawnManager {
                 } else {
                     spawnCache.clear();
                 }
-                plugin.logInfo("Loaded " + spawnCache.size() + " spawns.");
+                plugin.logInfo("&aLoaded &f" + spawnCache.size() + " &aspawns.");
                 if (callback != null) {
                     callback.run();
                 }
