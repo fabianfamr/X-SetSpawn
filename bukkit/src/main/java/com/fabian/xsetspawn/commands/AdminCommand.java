@@ -123,24 +123,18 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
                 if (sender instanceof Player) {
                     Player player = (Player) sender;
                     if (config.debugPlayer != null && config.debugPlayer.equals(player.getUniqueId())) {
-                        // Disable debug for this player
                         config.debugPlayer = null;
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                                config.prefix + "&7Debug mode: &cdisabled"));
+                        ColorUtils.sendMessage(player, config.prefix + "&7Debug mode: &cdisabled");
                     } else {
-                        // Enable debug for this player
                         config.debugPlayer = player.getUniqueId();
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                                config.prefix + "&7Debug mode: &aenabled &7(messages sent to you)"));
+                        ColorUtils.sendMessage(player, config.prefix + "&7Debug mode: &aenabled &7(messages sent to you)");
                     }
                 } else {
-                    // Console toggles config debug
                     boolean currentState = config.debugEnabled;
                     config.debugEnabled = !currentState;
                     plugin.getConfig().set("debug", config.debugEnabled);
                     plugin.saveConfig();
-                    sender.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                            config.prefix + "&7Debug mode: " + (config.debugEnabled ? "&aenabled &7(console)" : "&cdisabled")));
+                    ColorUtils.sendMessage(sender, config.prefix + "&7Debug mode: " + (config.debugEnabled ? "&aenabled &7(console)" : "&cdisabled"));
                 }
                 break;
 
