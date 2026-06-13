@@ -6,7 +6,7 @@ folia-supported: true
 authors: [Fabian]
 website: https://xproyects.qzz.io
 description: "Teleport to a custom spawn per world or global."
-softdepend: [PlaceholderAPI, Vault]
+softdepend: [PlaceholderAPI, Vault, DecentHolograms, HolographicDisplays]
 
 commands:
   xsetspawn:
