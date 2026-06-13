@@ -4,7 +4,10 @@ import com.fabian.xsetspawn.XSetSpawn;
 import com.fabian.xsetspawn.utils.DebugLogger;
 import org.bukkit.configuration.file.FileConfiguration;
 
+import org.bukkit.entity.Player;
+
 import java.util.List;
+import java.util.UUID;
 
 public class ManagerConfig {
 
@@ -18,6 +21,7 @@ public class ManagerConfig {
     public boolean notifyOnJoin;
     public boolean metricsEnabled;
     public boolean debugEnabled;
+    public UUID debugPlayer; // player who enabled debug via command (null = console-only via config)
 
     // 2. Permissions
     // Managed via Permission enum

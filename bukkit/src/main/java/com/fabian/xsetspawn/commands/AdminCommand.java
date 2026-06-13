@@ -12,6 +12,8 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 
+import org.bukkit.entity.Player;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -118,12 +120,28 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
                 break;
 
             case "debug":
-                boolean currentState = plugin.getManagerConfig().debugEnabled;
-                plugin.getManagerConfig().debugEnabled = !currentState;
-                plugin.getConfig().set("debug", plugin.getManagerConfig().debugEnabled);
-                plugin.saveConfig();
-                sender.sendMessage(ChatColor.translateAlternateColorCodes('&',
-                        "&8[&bX-SetSpawn&8] &7Debug mode: " + (plugin.getManagerConfig().debugEnabled ? "&aenabled" : "&cdisabled")));
+                if (sender instanceof Player) {
+                    Player player = (Player) sender;
+                    if (config.debugPlayer != null && config.debugPlayer.equals(player.getUniqueId())) {
+                        // Disable debug for this player
+                        config.debugPlayer = null;
+                        player.sendMessage(ChatColor.translateAlternateColorCodes('&',
+                                config.prefix + "&7Debug mode: &cdisabled"));
+                    } else {
+                        // Enable debug for this player
+                        config.debugPlayer = player.getUniqueId();
+                        player.sendMessage(ChatColor.translateAlternateColorCodes('&',
+                                config.prefix + "&7Debug mode: &aenabled &7(messages sent to you)"));
+                    }
+                } else {
+                    // Console toggles config debug
+                    boolean currentState = config.debugEnabled;
+                    config.debugEnabled = !currentState;
+                    plugin.getConfig().set("debug", config.debugEnabled);
+                    plugin.saveConfig();
+                    sender.sendMessage(ChatColor.translateAlternateColorCodes('&',
+                            config.prefix + "&7Debug mode: " + (config.debugEnabled ? "&aenabled &7(console)" : "&cdisabled")));
+                }
                 break;
 
             case "help":

@@ -1,12 +1,20 @@
 package com.fabian.xsetspawn.utils;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.managers.ManagerConfig;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 /**
- * DebugLogger - A static utility class for comprehensive debug logging.
- * Only outputs to console when debug mode is enabled in config.yml.
+ * DebugLogger - Static utility for debug logging with two modes:
+ * <p>
+ * - Config debug (debug: true in config.yml): messages go to CONSOLE only.
+ * - Command debug (/xsetspawn debug): messages go to the PLAYER who toggled it.
+ * <p>
+ * When both are active, only the player receives command-triggered debug messages.
+ * Config debug always outputs to console independently.
  */
 public final class DebugLogger {
 
@@ -17,53 +25,95 @@ public final class DebugLogger {
     }
 
     /**
-     * Checks if debug mode is enabled in the plugin configuration.
-     * Handles null gracefully if the plugin or config is not yet initialized.
+     * Checks if debug mode is active (either via config or via command).
      */
     private static boolean isDebugEnabled() {
         XSetSpawn plugin = XSetSpawn.getInstance();
         if (plugin == null) return false;
-        com.fabian.xsetspawn.managers.ManagerConfig config = plugin.getManagerConfig();
+        ManagerConfig config = plugin.getManagerConfig();
+        if (config == null) return false;
+        return config.debugEnabled || config.debugPlayer != null;
+    }
+
+    /**
+     * Checks if config-based debug is active (console output).
+     */
+    private static boolean isConfigDebug() {
+        XSetSpawn plugin = XSetSpawn.getInstance();
+        if (plugin == null) return false;
+        ManagerConfig config = plugin.getManagerConfig();
         if (config == null) return false;
         return config.debugEnabled;
     }
 
     /**
+     * Gets the player who enabled debug via command, or null.
+     */
+    private static Player getDebugPlayer() {
+        XSetSpawn plugin = XSetSpawn.getInstance();
+        if (plugin == null) return null;
+        ManagerConfig config = plugin.getManagerConfig();
+        if (config == null || config.debugPlayer == null) return null;
+        return Bukkit.getPlayer(config.debugPlayer);
+    }
+
+    /**
      * Logs a debug message with the standard debug prefix.
-     *
-     * @param message the message to log
      */
     public static void debug(String message) {
         if (!isDebugEnabled()) return;
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', PREFIX + message));
+        send(message);
     }
 
     /**
      * Logs a debug message with a category prefix.
      * Output format: [DEBUG] [Category] message
-     *
-     * @param category the category label (e.g. "SpawnManager", "Command")
-     * @param message  the message to log
      */
     public static void debug(String category, String message) {
         if (!isDebugEnabled()) return;
-        Bukkit.getConsoleSender().sendMessage(
-                ChatColor.translateAlternateColorCodes('&', PREFIX + "[" + category + "] " + message));
+        send("[" + category + "] " + message);
     }
 
     /**
      * Logs a debug message with a category prefix and includes a stack trace.
-     *
-     * @param category  the category label
-     * @param message   the message to log
-     * @param throwable the throwable whose stack trace should be printed
      */
     public static void debug(String category, String message, Throwable throwable) {
         if (!isDebugEnabled()) return;
-        Bukkit.getConsoleSender().sendMessage(
-                ChatColor.translateAlternateColorCodes('&', PREFIX + "[" + category + "] " + message));
+        send("[" + category + "] " + message);
         if (throwable != null) {
             throwable.printStackTrace();
+        }
+    }
+
+    /**
+     * Routes the message to the appropriate recipient:
+     * - If a player enabled debug via command → send to that player
+     * - If debug is enabled via config → send to console
+     * - If both → player gets it (config debug still goes to console independently via isConfigDebug)
+     */
+    private static void send(String message) {
+        XSetSpawn plugin = XSetSpawn.getInstance();
+        if (plugin == null) return;
+        ManagerConfig config = plugin.getManagerConfig();
+        if (config == null) return;
+
+        String formatted = ChatColor.translateAlternateColorCodes('&', PREFIX + message);
+
+        // Player debug via command
+        if (config.debugPlayer != null) {
+            Player debugPlayer = Bukkit.getPlayer(config.debugPlayer);
+            if (debugPlayer != null && debugPlayer.isOnline()) {
+                debugPlayer.sendMessage(formatted);
+                return;
+            } else {
+                // Player went offline, clean up
+                config.debugPlayer = null;
+            }
+        }
+
+        // Config debug → console only
+        if (config.debugEnabled) {
+            Bukkit.getConsoleSender().sendMessage(formatted);
         }
     }
 }
