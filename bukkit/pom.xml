@@ -45,11 +45,15 @@
             <name>FancyInnovations Repository</name>
             <url>https://repo.fancyinnovations.com/releases</url>
         </repository>
-        <!-- DecentHolograms Repository -->
+        <!-- DecentHolograms via JitPack (fallback) -->
         <repository>
-            <id>decentsoftware-releases</id>
-            <name>DecentSoftware Repository</name>
-            <url>https://repo.decentsoftware.eu/repository/maven-public/</url>
+            <id>jitpack-decentholograms</id>
+            <url>https://jitpack.io</url>
+        </repository>
+        <!-- NBT-API for DecentHolograms dependency -->
+        <repository>
+            <id>nbt-api-repo</id>
+            <url>https://repo.codemc.io/repository/nms/</url>
         </repository>
         <!-- Libby Repository -->
         <repository>
@@ -135,7 +139,7 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>eu.decentsoftware</groupId>
+            <groupId>com.github.DecentSoftware-eu</groupId>
             <artifactId>DecentHolograms</artifactId>
             <version>2.8.6</version>
             <scope>provided</scope>

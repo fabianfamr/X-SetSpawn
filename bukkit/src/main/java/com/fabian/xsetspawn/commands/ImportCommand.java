@@ -54,7 +54,7 @@ public class ImportCommand {
             return true;
         }
 
-        String source = args[0].toLowerCase();
+        source = args[0].toLowerCase();
         boolean force = args.length > 1 && args[1].equalsIgnoreCase("--force");
 
         // Check if source is already imported (unless --force)

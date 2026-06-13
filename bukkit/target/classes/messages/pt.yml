@@ -1,0 +1,110 @@
+# ============================================
+#        X-SetSpawn - Português (Portuguese)
+# ============================================
+
+# Comandos
+spawn-set: "&aSpawn definido com sucesso!"
+spawn-set-world: "&aSpawn definido para o mundo &e{0}&a."
+spawn-set-named: "&aSpawn &e{0}&a definido com sucesso."
+spawn-teleport: "&aTeleportado para o spawn."
+spawn-teleport-world: "&aTeleportado para o spawn de &e{0}&a."
+spawn-teleport-named: "&aTeleportado para o spawn &e{0}&a."
+
+# Named Spawns
+named-spawns-disabled: "&cSpawns com nome estão desativados no config.yml."
+spawn-deleted: "&aSpawn &e{0}&a foi removido com sucesso."
+spawn-not-found: "&cSpawn &e{0}&c não foi encontrado."
+no-spawns-to-delete: "&cNão há spawns personalizados para remover."
+delspawn-usage: "&cUso: /xss delspawn <nome>"
+
+# Comando /back
+back-teleport: "&aTeleportado de volta à sua localização anterior."
+back-no-location: "&cVocê não tem nenhuma localização salva (ou ela expirou)."
+
+# Ajuda
+help-header: "&8&m      &b [ &3Ajuda do X-SetSpawn &b] &8&m      "
+help-spawn: "&8» &b/spawn &7- Teleportar para o spawn"
+help-setspawn: "&8» &b/setspawn &7- Definir spawn global"
+help-delspawn: "&8» &b/delspawn &7- Remover um spawn"
+help-back: "&8» &b/back &7- Voltar ao local anterior"
+help-reload: "&8» &b/xss reload &7- Recarregar configuração"
+help-help: "&8» &b/xss help &7- Mostrar este menu de ajuda"
+help-locate: "&8» &b/xss locate &7- Ver idiomas disponíveis"
+help-version: "&8» &b/xss version &7- Ver a versão do plugin"
+help-update: "&8» &b/xss update &7- Verificar atualizações"
+
+help-footer: "&8&m                                     "
+
+# ============================================
+#               Erros (Errors)
+# ============================================
+no-permission: "&cVocê não tem permissão para usar este comando."
+command-disabled: "&cEste comando está desativado pelo administrador do servidor."
+spawn-not-set: "&cO spawn ainda não foi definido."
+spawn-not-set-world: "&cO spawn do mundo &e{0}&c não foi definido."
+player-only: "&cEste comando só pode ser usado por jogadores."
+world-not-found: "&cO mundo &e{0}&c não existe."
+cooldown-active: "&cVocê deve esperar &e{0} &csegundos."
+combat-active: "&cVocê não pode se teleportar enquanto está em combate!"
+falling-active: "&cVocê não pode se teleportar enquanto está caindo!"
+spawn-firstjoin-set: "&aPonto de spawn para primeiro ingresso definido com sucesso!"
+
+# ============================================
+#            Teletransporte & Eventos
+# ============================================
+teleporting-in: "&aTeleportando em &e{0} &asegundos... &cNão se mova!"
+teleport-canceled: "&cTeletransporte cancelado porque você se moveu."
+actionbar-teleporting: "&aChegando em &e{0} &asegundos..."
+
+# Titles
+title-teleporting: "&aTeleportando..."
+subtitle-teleporting: "&7Por favor, aguarde {0} segundos"
+title-teleported: "&aBem-vindo!"
+subtitle-teleported: "&7Você chegou ao spawn"
+
+# ============================================
+#               Economia (Economy)
+# ============================================
+not-enough-money: "&cVocê precisa de pelo menos &e${0} &cpara se teleportar!"
+teleport-cost: "&aVocê pagou &e${0} &apelo teletransporte."
+
+# ============================================
+#              Suporte Proxy Network
+# ============================================
+proxy-connecting: "&aEnviando você para o servidor &e{0}&a..."
+proxy-hub-message: "&aRetornando ao &eHub principal&a..."
+proxy-lobby-message: "&aVoltando ao &eLobby&a..."
+
+# ============================================
+#               Atualizações
+# ============================================
+update-available: "&eNova versão disponível! &7v{0} &e→ &av{1}"
+update-download: "&7Download: &b{0}"
+update-current: "&aVocê está usando a versão mais recente."
+update-checking: "&7Verificando atualizações..."
+update-error: "&cErro ao verificar atualizações."
+update-disabled: "&8[&bX-SetSpawn&8] &cO verificador de atualizações está desativado na configuração."
+
+# ============================================
+#            Informações da Versão
+# ============================================
+version-header: "&8&m---------------------------------"
+version-title: "&b&lX-SetSpawn &7- &fInformações da Versão"
+version-info-version: "&8» &7Versão: &e{0}"
+version-info-author: "&8» &7Autor: &f{0}"
+version-info-platform: "&8» &7Plataforma: &f{0}"
+version-footer: "&8&m---------------------------------"
+
+# ============================================
+#               Plugin Console
+# ============================================
+plugin-enabled: "&aX-SetSpawn v{0} habilitado com sucesso."
+plugin-disabled: "&cX-SetSpawn v{0} desabilitado."
+config-reloaded: "&aConfiguração recarregada com sucesso."
+
+# ============================================
+#              Locate / Language
+# ============================================
+locate-usage: "&7Uso: &f/xss locate <idioma>&7 para alterar instantaneamente"
+locate-not-found: "&cArquivo de idioma &e{0}.yml&c não encontrado em messages/."
+locate-changed: "&aIdioma alterado para &e{0}&a. Configuração recarregada."

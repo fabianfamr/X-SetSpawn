@@ -15,12 +15,11 @@ import com.fabian.xsetspawn.utils.ColorUtils;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
+import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 
-public class SpawnCommand implements CommandExecutor, TabCompleter {
+public class SpawnCommand implements TabExecutor {
 
     private final XSetSpawn plugin;
     private final SpawnManager spawnManager;

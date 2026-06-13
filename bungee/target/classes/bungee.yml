@@ -1,0 +1,5 @@
+name: X-SetSpawn
+main: com.fabian.xsetspawn.bungee.XSetSpawnBungee
+version: 2.3
+author: Fabian
+description: Proxy hub/lobby/spawn commands for X-SetSpawn

@@ -13,11 +13,18 @@ import com.fabian.xsetspawn.managers.Permission;
 import com.fabian.xsetspawn.utils.SchedulerUtil;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
+import java.util.Collections;
+import java.util.List;
 import org.bukkit.entity.Player;
 
-public class BackCommand implements CommandExecutor {
+public class BackCommand implements TabExecutor {
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        return Collections.emptyList();
+    }
 
     private final XSetSpawn plugin;
     private final BackManager backManager;

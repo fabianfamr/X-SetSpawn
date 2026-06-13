@@ -1,0 +1,255 @@
+#
+#  __   __     _____      _    _____                                 
+#  \ \ / /    / ____|    | |  / ____|                                
+#   \ V /____| (___   ___| |_| (___  _ __   __ ___      ___ __ ___  
+#    > <______\___ \ / _ \ __|\___ \| '_ \ / _` \ \ /\ / / '_ ` _ \ 
+#   / . \     ____) |  __/ |_ ____) | |_) | (_| |\ V  V /| | | | | |
+#  /_/ \_\   |_____/ \___|\__|_____/| .__/ \__,_| \_/\_/ |_| |_| |_|
+#                                  | |                             
+#                                  |_|                             
+# ==============================================================================
+# X-SetSpawn | Developed by Fabian (X Proyects)
+# Discord: http://discord.xproyects.qzz.io/
+# Supported versions: 1.8.8 - 26.1+
+# ==============================================================================
+
+# Internal config version. DO NOT CHANGE!
+# If this is lower than the plugin's version, the config will auto-update.
+code: 7
+
+# Plugin language.
+# Available: ES (Spanish), EN (English), JA (Japanese), PT (Portuguese), RU (Russian), CUSTOM
+language: en
+
+# Global prefix for all plugin messages.
+prefix: "&8[&bX-SetSpawn&8]&r "
+
+# Per-world spawn mode.
+# true  = Each world has its own /spawn point (set with /setspawn in each world)
+# false = One global /spawn point for the entire server
+per-world: false
+
+# Check for plugin updates on server startup?
+check-updates: true
+
+# Enable anonymous plugin statistics via bStats?
+# https://bstats.org/plugin/bukkit/X-SetSpawn/30619
+metrics: true
+
+# Enable detailed debug logging in the console?
+debug: false
+
+# ============================================
+#          Named Spawns
+# ============================================
+# Allow using named spawns (e.g. /spawn vip, /setspawn vip).
+# If false, classic single-spawn mode is used.
+named-spawns: true
+
+# ============================================
+#           Storage Settings
+# ============================================
+# Where should spawn locations be saved?
+#
+# Options:
+#   YAML    - Local file (plugins/X-SetSpawn/spawns/)  [Default, no setup needed]
+#   SQL     - MySQL, MariaDB, or H2 database            [Best for multi-server networks]
+#   MONGODB - MongoDB NoSQL database                    [Alternative option]
+#
+# For cross-server spawn sync (e.g. multiple lobby servers), use SQL.
+storage:
+  type: YAML
+
+  # SQL Settings (used when type: SQL, H2 or MARIADB)
+  sql:
+    host: localhost
+    port: 3306
+    database: minecraft
+    username: root
+    password: ""
+
+  # MongoDB Settings (used when type: MONGODB)
+  mongodb:
+    uri: "mongodb://localhost:27017"
+    database: minecraft
+    collection: xsetspawn_spawns
+
+# ============================================
+#          Command Aliases
+# ============================================
+# Add custom aliases for the plugin commands.
+# These are registered at startup — no need to edit plugin.yml.
+#
+# EXAMPLES:
+#   spawn: [hub, lobby]
+#   setspawn: [setspawn2]
+#   xsetspawn: [xss2]
+#
+# NOTE: Aliases already defined in plugin.yml (like /ss for /setspawn)
+# are always active. These are ADDITIONAL aliases on top of those.
+command-aliases:
+  spawn: []
+  setspawn: []
+  xsetspawn: []
+
+# ============================================
+#              Events
+# ============================================
+events:
+  # Teleport players to spawn when they join for the first time?
+  on-first-join: true
+
+  # Teleport players to spawn when they die?
+  on-death: true
+
+  # Smart Respawn: If on-death is true, should players respawn at their
+  # bed or respawn anchor first (if they have one set)?
+  # true  = Bed/Anchor takes priority over spawn
+  # false = Always respawn at spawn
+  smart-respawn: true
+
+  # Teleport players to spawn on join if they have the permission 'xsetspawn.spawn-on-join'?
+  spawn-on-join: false
+
+# ============================================
+#           Teleport Mechanics
+# ============================================
+
+# Cooldown between uses of /spawn and /back (in seconds).
+# Players with xsetspawn.bypass.cooldown skip this.
+cooldown:
+  enabled: true
+  time: 10
+
+# Delay (countdown) before teleporting. Configurable per-command.
+# Players with xsetspawn.bypass.delay skip this.
+delay:
+  enabled: true
+  cancel-on-move: true
+  # Separate countdown times per command (in seconds). -1 = use global time.
+  time: 3        # Global default
+  spawn: 3       # Delay for /spawn (-1 uses global)
+  back: 0        # Delay for /back (-1 uses global, 0 = instant)
+
+# Block /spawn if the player is currently in combat?
+# Supports: CombatLogX, PvPManager, DeluxeCombat (detected automatically at runtime)
+# Message is configured in your language file (combat-active key).
+combat-check:
+  enabled: false
+
+# Block /spawn if the player is currently falling?
+# Message is configured in your language file (falling-active key).
+falling-check:
+  enabled: true
+
+# ============================================
+#               Economy
+# ============================================
+# Charge players a fee to use /spawn. Requires the Vault plugin.
+# Players with xsetspawn.bypass.economy teleport for free.
+economy:
+  enabled: false
+  cost: 50.0
+
+# ============================================
+#           Back Command
+# ============================================
+# Allow players to return to their previous location.
+# The location is saved when using /spawn or when dying and respawning at spawn.
+# When disabled, the /back command is unregistered and will not appear in tab-complete.
+back:
+  enabled: true
+  # How many minutes before the saved location expires (0 = never expires).
+  expires: 60
+
+# ============================================
+#         Protections & Safety
+# ============================================
+
+# Briefly protect players from damage after they teleport to spawn.
+protection:
+  enabled: true
+  time: 3  # seconds of invincibility after teleport
+
+# Automatically teleport players to spawn if they fall into the void.
+void-teleport:
+  enabled: true
+  # Height at which void teleport triggers (default -64 for 1.18+, use 0 for 1.12-)
+  height: -64
+
+# A separate, dedicated spawn point for players joining for the very first time.
+# Set it with: /xss setfirstjoin
+first-join-spawn:
+  enabled: true
+
+# ============================================
+#           Visual Effects
+# ============================================
+
+# Particles — configure different particles per event.
+# Particle type names: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Particle.html
+particles:
+  enabled: true
+  # Particle during the teleport countdown (spiral around the player)
+  countdown:
+    type: "VILLAGER_HAPPY"
+    amount: 5
+  # Particle burst when arriving at spawn
+  spawn:
+    type: "PORTAL"
+    amount: 20
+  # Particle burst when using /back
+  back:
+    type: "EXPLOSION_LARGE"
+    amount: 15
+  # Particle burst when respawning at spawn after death
+  death:
+    type: "FLAME"
+    amount: 10
+
+# Sound played when the player arrives at spawn.
+# Sound names: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Sound.html
+sounds:
+  enabled: true
+  spawn-sound: "ENTITY_ENDERMAN_TELEPORT"
+  volume: 1.0
+  pitch: 1.0
+  # Play a "Tic-Tac" click sound each second during the countdown?
+  countdown-sounds: true
+
+# Launch a firework when the player arrives at spawn.
+fireworks:
+  enabled: false
+  # Color: RED, GREEN, BLUE, YELLOW, WHITE, PURPLE, ORANGE, LIME
+  color: "BLUE"
+  # Power = height of the firework (1 = low, 2 = high)
+  power: 1
+
+# Show a title on screen when teleporting.
+titles:
+  enabled: true
+  fade-in: 10   # ticks (20 ticks = 1 second)
+  stay: 40
+  fade-out: 10
+
+# Show the countdown in the ActionBar (the text above the hotbar).
+# Requires delay.enabled: true
+actionbar:
+  enabled: true
+
+# Show the countdown in a BossBar (top of the screen). Requires Minecraft 1.9+.
+bossbar:
+  enabled: false
+  # Colors: BLUE, RED, GREEN, YELLOW, PURPLE, WHITE, PINK
+  color: "BLUE"
+  # Styles: SOLID, SEGMENTED_6, SEGMENTED_10, SEGMENTED_12, SEGMENTED_20
+  style: "SOLID"
+
+# Show a floating hologram above the player during teleport countdown.
+# Compatible with: FancyHolograms, DecentHolograms, or built-in ArmorStand fallback.
+# Only supports legacy color codes (&a, &e, etc.) in text.
+# Use {0} placeholder for remaining seconds.
+holograms:
+  enabled: false
+  text: "&aTeleporting in &e{0} &aseconds..."
+  height-offset: 2.5

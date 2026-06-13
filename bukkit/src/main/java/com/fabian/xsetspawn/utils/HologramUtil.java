@@ -1,15 +1,15 @@
 package com.fabian.xsetspawn.utils;
 
-import de.oliver.fancyholograms.FancyHologramsPlugin;
 import de.oliver.fancyholograms.api.HologramManager;
+import de.oliver.fancyholograms.api.data.TextHologramData;
 import de.oliver.fancyholograms.api.hologram.Hologram;
-import de.oliver.fancyholograms.api.hologram.TextHologramData;
 import eu.decentsoftware.holograms.api.DHAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 
 import java.util.Collections;
 import java.util.Map;
@@ -143,18 +143,36 @@ public class HologramUtil {
 
     // ==================== FancyHolograms ====================
 
+    /**
+     * Get the FancyHolograms HologramManager via reflection,
+     * since the main plugin class is not part of the public API.
+     */
+    private static HologramManager getFHManager() {
+        try {
+            Plugin fhPlugin = Bukkit.getPluginManager().getPlugin("FancyHolograms");
+            if (fhPlugin == null) return null;
+            return (HologramManager) fhPlugin.getClass()
+                    .getMethod("getHologramManager")
+                    .invoke(fhPlugin);
+        } catch (NoClassDefFoundError | Exception e) {
+            DebugLogger.debug("HologramUtil", "Failed to get FancyHolograms manager: " + e.getMessage());
+            return null;
+        }
+    }
+
     private static void createFH(String id, Location loc, String text) {
         try {
-            HologramManager manager = FancyHologramsPlugin.get().getHologramManager();
+            HologramManager manager = getFHManager();
+            if (manager == null) return;
 
             // Remove existing if present from a previous unclosed session
-            Optional<Hologram> existing = manager.getHologram(id);
-            if (existing.isPresent()) {
-                manager.removeHologram(id);
+            Optional<Hologram> existingOpt = manager.getHologram(id);
+            if (existingOpt.isPresent()) {
+                manager.removeHologram(existingOpt.get());
             }
 
             TextHologramData data = new TextHologramData(id, loc);
-            data.setText(text);
+            data.setText(Collections.singletonList(text));
             data.setPersistent(false);
 
             Hologram holo = manager.create(data);
@@ -167,12 +185,15 @@ public class HologramUtil {
 
     private static void updateFH(String id, String text) {
         try {
-            HologramManager manager = FancyHologramsPlugin.get().getHologramManager();
-            Hologram holo = manager.getHologram(id).orElse(null);
-            if (holo != null) {
+            HologramManager manager = getFHManager();
+            if (manager == null) return;
+
+            Optional<Hologram> holoOpt = manager.getHologram(id);
+            if (holoOpt.isPresent()) {
+                Hologram holo = holoOpt.get();
                 if (holo.getData() instanceof TextHologramData) {
                     TextHologramData textData = (TextHologramData) holo.getData();
-                    textData.setText(text);
+                    textData.setText(Collections.singletonList(text));
                     holo.forceUpdate();
                 }
             }
@@ -183,8 +204,13 @@ public class HologramUtil {
 
     private static void removeFH(String id) {
         try {
-            HologramManager manager = FancyHologramsPlugin.get().getHologramManager();
-            manager.removeHologram(id);
+            HologramManager manager = getFHManager();
+            if (manager == null) return;
+
+            Optional<Hologram> holoOpt = manager.getHologram(id);
+            if (holoOpt.isPresent()) {
+                manager.removeHologram(holoOpt.get());
+            }
         } catch (NoClassDefFoundError | Exception ignored) {}
     }
 
@@ -193,8 +219,10 @@ public class HologramUtil {
     private static void createDH(String id, Location loc, String text) {
         try {
             DHAPI.removeHologram(id);
-            DHAPI.createHologram(id, loc);
-            DHAPI.addHologramLine(id, text);
+            eu.decentsoftware.holograms.api.holograms.Hologram holo = DHAPI.createHologram(id, loc);
+            if (holo != null) {
+                DHAPI.addHologramLine(holo, text);
+            }
         } catch (NoClassDefFoundError | Exception e) {
             DebugLogger.debug("HologramUtil", "Failed to create DecentHolograms hologram: " + e.getMessage());
             dhAvailable = false;
@@ -203,7 +231,10 @@ public class HologramUtil {
 
     private static void updateDH(String id, String text) {
         try {
-            DHAPI.setHologramLines(id, Collections.singletonList(text));
+            eu.decentsoftware.holograms.api.holograms.Hologram holo = DHAPI.getHologram(id);
+            if (holo != null) {
+                DHAPI.setHologramLines(holo, Collections.singletonList(text));
+            }
         } catch (NoClassDefFoundError | Exception e) {
             DebugLogger.debug("HologramUtil", "Failed to update DecentHolograms hologram: " + e.getMessage());
         }

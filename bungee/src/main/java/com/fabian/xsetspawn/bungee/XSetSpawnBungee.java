@@ -49,6 +49,7 @@ public class XSetSpawnBungee extends Plugin implements Listener {
     private boolean debugEnabled = false;
     private boolean showConnectingMessage = true;
     private boolean connectOnFirstJoin = true;
+    private boolean checkUpdates = true;
     private String language = "EN";
 
     // Global Lobby Location (synced from Bukkit)
@@ -109,7 +110,7 @@ public class XSetSpawnBungee extends Plugin implements Listener {
         getProxy().getPluginManager().registerListener(this, this);
 
         // Check for updates
-        if (getConfig().getBoolean("updates.check", true)) {
+        if (checkUpdates) {
             new UpdateChecker(this).checkForUpdates();
         }
 
@@ -602,6 +603,9 @@ public class XSetSpawnBungee extends Plugin implements Listener {
                         break;
                     case "connect-on-first-join":
                         this.connectOnFirstJoin = value.equalsIgnoreCase("true");
+                        break;
+                    case "updates-check":
+                        this.checkUpdates = value.equalsIgnoreCase("true");
                         break;
                     case "prefix":
                         this.prefix = translateColors(value);

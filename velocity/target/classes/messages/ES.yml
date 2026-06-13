@@ -1,0 +1,14 @@
+# X-SetSpawn (Velocity) - Mensajes en Español
+
+
+connecting: "&aEnviándote a &e{server}&a..."
+cooldown: "&cEspera &e{time}s &cantes de usar esto de nuevo."
+server-not-found: "&cServidor '{server}' no encontrado!"
+player-only: "&cEste comando solo puede ser usado por jugadores."
+already-connected: "&eYa estás conectado a este servidor!"
+connection-failed: "&cNo se pudo conectar a &e{server}&c. Inténtalo de nuevo."
+lobby-set: "&aEl servidor global del lobby se ha establecido en: &e{server}"
+no-permission: "&cNo tienes permiso para usar este comando."
+error-no-server: "&cError: No se pudo determinar el servidor actual."
+reload-success: "&aConfiguración y mensajes recargados exitosamente!"
+reload-help: "&e/xssproxy reload &7- &fRecargar la configuración y mensajes del plugin"

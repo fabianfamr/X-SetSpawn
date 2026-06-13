@@ -5,15 +5,14 @@ import com.fabian.xsetspawn.utils.DebugLogger;
 import com.fabian.xsetspawn.managers.LanguageManager;
 import com.fabian.xsetspawn.managers.Permission;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabCompleter;
+import org.bukkit.command.TabExecutor;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class DelSpawnCommand implements CommandExecutor, TabCompleter {
+public class DelSpawnCommand implements TabExecutor {
 
     private final XSetSpawn plugin;
     private final LanguageManager languageManager;

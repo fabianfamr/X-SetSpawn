@@ -69,6 +69,7 @@ public class XSetSpawnVelocity {
     private boolean debugEnabled = false;
     private boolean showConnectingMessage = true;
     private boolean connectOnFirstJoin = true;
+    private boolean checkUpdates = true;
     private String language = "EN";
 
     // Global Lobby Location (synced from Bukkit)
@@ -139,7 +140,7 @@ public class XSetSpawnVelocity {
         server.getConsoleCommandSource().sendMessage(LEGACY.deserialize("&b----------------------------------------------"));
 
         // Check for updates
-        if (configuration.getBoolean("updates.check", true)) {
+        if (checkUpdates) {
             new UpdateChecker(this).checkForUpdates();
         }
 
@@ -627,6 +628,9 @@ public class XSetSpawnVelocity {
                         break;
                     case "connect-on-first-join":
                         this.connectOnFirstJoin = value.equalsIgnoreCase("true");
+                        break;
+                    case "updates-check":
+                        this.checkUpdates = value.equalsIgnoreCase("true");
                         break;
                     case "prefix":
                         this.prefix = translateColors(value);

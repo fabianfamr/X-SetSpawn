@@ -1,0 +1,112 @@
+# ============================================
+#        X-SetSpawn - 日本語 (Japanese)
+# ============================================
+
+# コマンド
+spawn-set: "&aスポーン地点が正常に設定されました！"
+spawn-set-world: "&e{0}&a の世界のスポーン地点が設定されました。"
+spawn-set-named: "&aスポーン &e{0}&a が正常に設定されました。"
+spawn-teleport: "&aスポーン地点にテレポートしました。"
+spawn-teleport-world: "&e{0}&a のスポーン地点にテレポートしました。"
+spawn-teleport-named: "&aスポーン &e{0}&a にテレポートしました。"
+
+# Named Spawns
+named-spawns-disabled: "&c名前付きスポーンは config.yml で無効化されています。"
+spawn-deleted: "&aスポーン &e{0}&a が削除されました。"
+spawn-not-found: "&cスポーン &e{0}&c は見つかりませんでした。"
+no-spawns-to-delete: "&c削除できるカスタムスポーンがありません。"
+delspawn-usage: "&c使い方: /xss delspawn <名前>"
+
+# /backコマンド
+back-teleport: "&a前の場所に戻りました。"
+back-no-location: "&c保存された場所がありません（または有効期限が切れました）。"
+
+# ヘルプ
+help-header: "&8&m      &b [ &3X-SetSpawn ヘルプ &b] &8&m      "
+help-spawn: "&8» &b/spawn &7- スポーン地点にテレポート"
+help-setspawn: "&8» &b/setspawn &7- グローバルスポーンを設定"
+help-delspawn: "&8» &b/delspawn &7- スポーンを削除"
+help-back: "&8» &b/back &7- 前の場所に戻る"
+help-reload: "&8» &b/xss reload &7- 設定を再読み込み"
+help-help: "&8» &b/xss help &7- このヘルプを表示"
+help-locate: "&8» &b/xss locate &7- 利用可能な言語を表示"
+help-version: "&8» &b/xss version &7- プラグインのバージョンを表示"
+help-update: "&8» &b/xss update &7- アップデートを確認"
+
+help-footer: "&8&m                                     "
+
+# ============================================
+#               エラー (Errors)
+# ============================================
+no-permission: "&cこのコマンドを使用する権限がありません。"
+command-disabled: "&cこのコマンドはサーバー管理者によって無効化されています。"
+spawn-not-set: "&cスポーン地点がまだ設定されていません。"
+spawn-not-set-world: "&e{0}&c の世界のスポーン地点は設定されていません。"
+player-only: "&cこのコマンドはプレイヤーのみが使用できます。"
+world-not-found: "&e{0}&c という世界は見つかりませんでした。"
+cooldown-active: "&cあと &e{0} &c秒待つ必要があります。"
+combat-active: "&c戦闘中はテレポートできません！"
+falling-active: "&c落下中はテレポートできません！"
+spawn-firstjoin-set: "&a初回ログイン用のスポーン地点が正常に設定されました！"
+combat-active: "&c戦闘中はテレポートできません！"
+falling-active: "&c落下中はテレポートできません！"
+
+# ============================================
+#            テレポートとイベント (Teleport & Events)
+# ============================================
+teleporting-in: "&a&e{0} &a秒後にテレポートします... &c動かないでください！"
+teleport-canceled: "&c動いたため、テレポートがキャンセルされました。"
+actionbar-teleporting: "&a&e{0} &a秒後に到着します..."
+
+# Titles
+title-teleporting: "&aテレポート中..."
+subtitle-teleporting: "&7{0} 秒お待ちください"
+title-teleported: "&aようこそ！"
+subtitle-teleported: "&7スポーンに到着しました"
+
+# ============================================
+#               経済 (Economy)
+# ============================================
+not-enough-money: "&cテレポートするには少なくとも &e${0} &c必要です！"
+teleport-cost: "&aテレポートの料金として &e${0} &a支払いました。"
+
+# ============================================
+#              プロキシのサポート (Proxy Network)
+# ============================================
+proxy-connecting: "&e{0}&a サーバーに接続しています..."
+proxy-hub-message: "&eメインハブ&aに戻っています..."
+proxy-lobby-message: "&eロビー&aに戻っています..."
+
+# ============================================
+#               アップデート (Updates)
+# ============================================
+update-available: "&e新しいバージョンが利用可能です！ &7v{0} &e→ &av{1}"
+update-download: "&7ダウンロード: &b{0}"
+update-current: "&a最新バージョンを使用しています。"
+update-checking: "&7アップデートを確認中..."
+update-error: "&cアップデートの確認中にエラーが発生しました。"
+update-disabled: "&8[&bX-SetSpawn&8] &cアップデート確認は設定で無効になっています。"
+
+# ============================================
+#              バージョン情報
+# ============================================
+version-header: "&8&m---------------------------------"
+version-title: "&b&lX-SetSpawn &7- &fバージョン情報"
+version-info-version: "&8» &7バージョン: &e{0}"
+version-info-author: "&8» &7作成者: &f{0}"
+version-info-platform: "&8» &7プラットフォーム: &f{0}"
+version-footer: "&8&m---------------------------------"
+
+# ============================================
+#              プラグイン (Plugin Settings)
+# ============================================
+plugin-enabled: "&aX-SetSpawn v{0} が正常に有効になりました。"
+plugin-disabled: "&cX-SetSpawn v{0} が無効になりました。"
+config-reloaded: "&a設定が正常に再読み込みされました。"
+
+# ============================================
+#              Locate / Language
+# ============================================
+locate-usage: "&7使い方: &f/xss locate <言語>&7 で即時変更"
+locate-not-found: "&c言語ファイル &e{0}.yml&c が messages/ に見つかりません。"
+locate-changed: "&a言語を &e{0}&a に変更しました。設定を再読み込みしました。"

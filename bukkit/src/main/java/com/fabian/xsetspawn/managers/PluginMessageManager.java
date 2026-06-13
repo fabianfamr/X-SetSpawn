@@ -85,8 +85,8 @@ public class PluginMessageManager implements PluginMessageListener {
 
             } else if (subChannel.equals("GlobalLobbyTeleport")) {
                 // Incoming forced teleport from Proxy
-                DebugLogger.debug("PluginMessage", "SubChannel GlobalLobbyTeleport for " + player.getName() + " to " + worldName);
                 String worldName = in.readUTF();
+                DebugLogger.debug("PluginMessage", "SubChannel GlobalLobbyTeleport for " + player.getName() + " to " + worldName);
                 double x = in.readDouble();
                 double y = in.readDouble();
                 double z = in.readDouble();
