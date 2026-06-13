@@ -1,22 +1,25 @@
 package com.fabian.xsetspawn.utils;
 
+import eu.decentsoftware.holograms.api.DHAPI;
+import eu.decentsoftware.holograms.api.holograms.Hologram;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Hologram utility with multi-provider support.
- * Priority: FancyHolograms > HolographicDisplays > ArmorStand fallback
+ * Priority: DecentHolograms > HolographicDisplays > ArmorStand fallback
  */
 public class HologramUtil {
 
-    private static boolean fhAvailable = false;
+    private static boolean dhAvailable = false;
     private static boolean hdAvailable = false;
 
     // Track HD holograms by player UUID (HD requires manual tracking)
@@ -24,10 +27,10 @@ public class HologramUtil {
     private static final Map<UUID, Object> trackedHolograms = new ConcurrentHashMap<>();
 
     static {
-        fhAvailable = Bukkit.getPluginManager().isPluginEnabled("FancyHolograms");
+        dhAvailable = Bukkit.getPluginManager().isPluginEnabled("DecentHolograms");
         hdAvailable = Bukkit.getPluginManager().isPluginEnabled("HolographicDisplays");
-        if (fhAvailable) {
-            DebugLogger.debug("HologramUtil", "Hologram provider: FancyHolograms");
+        if (dhAvailable) {
+            DebugLogger.debug("HologramUtil", "Hologram provider: DecentHolograms");
         } else if (hdAvailable) {
             DebugLogger.debug("HologramUtil", "Hologram provider: HolographicDisplays");
         } else {
@@ -39,7 +42,7 @@ public class HologramUtil {
      * Returns the name of the active hologram provider.
      */
     public static String getProviderName() {
-        if (fhAvailable) return "FancyHolograms";
+        if (dhAvailable) return "DecentHolograms";
         if (hdAvailable) return "HolographicDisplays";
         return "ArmorStand (built-in)";
     }
@@ -55,8 +58,8 @@ public class HologramUtil {
         String id = "xsetspawn_" + player.getUniqueId().toString().substring(0, 8);
         String coloredText = org.bukkit.ChatColor.translateAlternateColorCodes('&', text);
 
-        if (fhAvailable) {
-            createFH(id, displayLoc, coloredText);
+        if (dhAvailable) {
+            createDH(id, displayLoc, coloredText);
         } else if (hdAvailable) {
             createHD(player, displayLoc, coloredText);
         } else {
@@ -71,8 +74,8 @@ public class HologramUtil {
         String id = "xsetspawn_" + player.getUniqueId().toString().substring(0, 8);
         String coloredText = org.bukkit.ChatColor.translateAlternateColorCodes('&', newText);
 
-        if (fhAvailable) {
-            updateFH(id, coloredText);
+        if (dhAvailable) {
+            updateDH(id, coloredText);
         } else if (hdAvailable) {
             updateHD(player, coloredText);
         } else {
@@ -92,8 +95,8 @@ public class HologramUtil {
     public static void removeHologram(Player player) {
         String id = "xsetspawn_" + player.getUniqueId().toString().substring(0, 8);
 
-        if (fhAvailable) {
-            removeFH(id);
+        if (dhAvailable) {
+            removeDH(id);
         } else if (hdAvailable) {
             removeHD(player);
         } else {
@@ -110,11 +113,11 @@ public class HologramUtil {
      * Removes ALL active holograms. Called on plugin disable/reload.
      */
     public static void removeAll() {
-        // FancyHolograms: remove by iterating tracked IDs with our prefix
-        if (fhAvailable) {
+        // DecentHolograms: remove by name with our prefix
+        if (dhAvailable) {
             for (UUID uuid : trackedHolograms.keySet()) {
                 String id = "xsetspawn_" + uuid.toString().substring(0, 8);
-                removeFH(id);
+                removeDH(id);
             }
         }
 
@@ -132,60 +135,36 @@ public class HologramUtil {
         trackedHolograms.clear();
     }
 
-    // ==================== FancyHolograms ====================
+    // ==================== DecentHolograms ====================
 
-    private static void createFH(String id, Location loc, String text) {
+    private static void createDH(String id, Location loc, String text) {
         try {
-            de.oliver.fancyholograms.FancyHolograms plugin =
-                    (de.oliver.fancyholograms.FancyHolograms) Bukkit.getPluginManager().getPlugin("FancyHolograms");
-            if (plugin == null) { fhAvailable = false; return; }
+            // Remove existing if present from a previous unclosed session
+            DHAPI.removeHologram(id);
 
-            de.oliver.fancyholograms.api.HologramManager manager = plugin.getHologramManager();
-
-            // Check if it already exists (from a previous unclosed session)
-            if (manager.getHologram(id).isPresent()) {
-                manager.removeHologram(id);
-            }
-
-            de.oliver.fancyholograms.api.hologram.TextHologramData data =
-                    new de.oliver.fancyholograms.api.hologram.TextHologramData(id, loc);
-            data.setText(text);
-            data.setPersistent(false);
-
-            de.oliver.fancyholograms.api.hologram.Hologram holo = manager.create(data);
-            manager.addHologram(holo);
+            // Create hologram with one line of text
+            Hologram holo = DHAPI.createHologram(id, loc);
+            DHAPI.addHologramLine(id, text);
         } catch (NoClassDefFoundError | Exception e) {
-            DebugLogger.debug("HologramUtil", "Failed to create FancyHolograms hologram: " + e.getMessage());
-            fhAvailable = false;
+            DebugLogger.debug("HologramUtil", "Failed to create DecentHolograms hologram: " + e.getMessage());
+            dhAvailable = false;
         }
     }
 
-    private static void updateFH(String id, String text) {
+    private static void updateDH(String id, String text) {
         try {
-            de.oliver.fancyholograms.FancyHolograms plugin =
-                    (de.oliver.fancyholograms.FancyHolograms) Bukkit.getPluginManager().getPlugin("FancyHolograms");
-            if (plugin == null) return;
-
-            de.oliver.fancyholograms.api.HologramManager manager = plugin.getHologramManager();
-            de.oliver.fancyholograms.api.hologram.Hologram holo = manager.getHologram(id).orElse(null);
+            Hologram holo = DHAPI.getHologram(id);
             if (holo != null) {
-                de.oliver.fancyholograms.api.hologram.HologramData data = holo.getData();
-                if (data instanceof de.oliver.fancyholograms.api.hologram.TextHologramData) {
-                    ((de.oliver.fancyholograms.api.hologram.TextHologramData) data).setText(text);
-                    holo.forceUpdate();
-                }
+                DHAPI.setHologramLines(id, Collections.singletonList(text));
             }
         } catch (NoClassDefFoundError | Exception e) {
-            DebugLogger.debug("HologramUtil", "Failed to update FancyHolograms hologram: " + e.getMessage());
+            DebugLogger.debug("HologramUtil", "Failed to update DecentHolograms hologram: " + e.getMessage());
         }
     }
 
-    private static void removeFH(String id) {
+    private static void removeDH(String id) {
         try {
-            de.oliver.fancyholograms.FancyHolograms plugin =
-                    (de.oliver.fancyholograms.FancyHolograms) Bukkit.getPluginManager().getPlugin("FancyHolograms");
-            if (plugin == null) return;
-            plugin.getHologramManager().removeHologram(id);
+            DHAPI.removeHologram(id);
         } catch (NoClassDefFoundError | Exception ignored) {}
     }
 
