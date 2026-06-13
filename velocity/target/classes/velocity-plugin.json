@@ -1,1 +1,0 @@
-{"id":"x-setspawn","name":"X-SetSpawn","version":"2.3","description":"Proxy hub/lobby/spawn commands for X-SetSpawn","authors":["Fabian"],"dependencies":[],"main":"com.fabian.xsetspawn.velocity.XSetSpawnVelocity"}
