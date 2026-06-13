@@ -39,6 +39,12 @@
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
+        <!-- FancyHolograms Repository -->
+        <repository>
+            <id>fancyinnovations-releases</id>
+            <name>FancyInnovations Repository</name>
+            <url>https://repo.fancyinnovations.com/releases</url>
+        </repository>
         <!-- DecentHolograms Repository -->
         <repository>
             <id>decentsoftware-releases</id>
@@ -121,17 +127,17 @@
             <version>4.14.0</version>
             <scope>provided</scope>
         </dependency>
-        <!-- Hologram APIs (DecentHolograms + HolographicDisplays) -->
+        <!-- Hologram APIs (FancyHolograms + DecentHolograms) -->
+        <dependency>
+            <groupId>de.oliver</groupId>
+            <artifactId>FancyHolograms</artifactId>
+            <version>2.9.1</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>eu.decentsoftware</groupId>
             <artifactId>DecentHolograms</artifactId>
             <version>2.8.6</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.gmail.filoghost.holographicdisplays</groupId>
-            <artifactId>holographicdisplays-api</artifactId>
-            <version>2.4.9</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
