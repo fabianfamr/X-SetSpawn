@@ -1,5 +1,5 @@
 name: X-SetSpawn
-version: 2.3
+version: 2.4
 main: com.fabian.xsetspawn.XSetSpawn
 api-version: 1.13
 folia-supported: true
@@ -44,6 +44,9 @@ permissions:
     default: op
   xsetspawn.locate:
     description: Allows viewing available languages
+    default: op
+  xsetspawn.admin.forcemessages:
+    description: Allows force-updating or resetting language message files
     default: op
   xsetspawn.back:
     description: Allows using /back

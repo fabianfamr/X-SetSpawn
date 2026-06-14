@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.commands;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.ColorUtils;
 import com.fabian.xsetspawn.utils.DebugLogger;
 import com.fabian.xsetspawn.managers.LanguageManager;
 import com.fabian.xsetspawn.managers.Permission;
@@ -26,7 +27,7 @@ public class DelSpawnCommand implements TabExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         DebugLogger.debug("Command", "/delspawn executed by " + sender.getName() + " with args: " + java.util.Arrays.toString(args));
         if (!Permission.DELSPAWN.has(sender)) {
-            sender.sendMessage(languageManager.getMessage("no-permission"));
+            ColorUtils.sendMessage(sender, languageManager.getMessage("no-permission"));
             return true;
         }
 
@@ -37,19 +38,19 @@ public class DelSpawnCommand implements TabExecutor {
                 // Only one spawn exists: delete it without requiring a name
                 String onlySpawn = allSpawns.get(0);
                 plugin.getSpawnManager().removeNamedSpawn(onlySpawn);
-                sender.sendMessage(languageManager.getMessage("spawn-deleted", onlySpawn));
+                ColorUtils.sendMessage(sender, languageManager.getMessage("spawn-deleted", onlySpawn));
             } else if (allSpawns.isEmpty()) {
-                sender.sendMessage(languageManager.getMessage("no-spawns-to-delete"));
+                ColorUtils.sendMessage(sender, languageManager.getMessage("no-spawns-to-delete"));
             } else {
-                sender.sendMessage(languageManager.getMessage("delspawn-usage"));
+                ColorUtils.sendMessage(sender, languageManager.getMessage("delspawn-usage"));
             }
         } else {
             String name = args[0].toLowerCase();
             if (plugin.getSpawnManager().isNamedSpawnSet(name)) {
                 plugin.getSpawnManager().removeNamedSpawn(name);
-                sender.sendMessage(languageManager.getMessage("spawn-deleted", name));
+                ColorUtils.sendMessage(sender, languageManager.getMessage("spawn-deleted", name));
             } else {
-                sender.sendMessage(languageManager.getMessage("spawn-not-found", name));
+                ColorUtils.sendMessage(sender, languageManager.getMessage("spawn-not-found", name));
             }
         }
 

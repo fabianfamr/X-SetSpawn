@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.commands;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.ColorUtils;
 import com.fabian.xsetspawn.utils.DebugLogger;
 import com.fabian.xsetspawn.managers.LanguageManager;
 import com.fabian.xsetspawn.managers.Permission;
@@ -59,8 +60,8 @@ public class ImportCommand {
 
         // Check if source is already imported (unless --force)
         if (!force && plugin.getConfig().getBoolean("imported." + source, false)) {
-            sender.sendMessage(lang.getMessage("import-already-done", source));
-            sender.sendMessage(lang.getMessage("import-force-hint"));
+            ColorUtils.sendMessage(sender, lang.getMessage("import-already-done", source));
+            ColorUtils.sendMessage(sender, lang.getMessage("import-force-hint"));
             return true;
         }
 
@@ -88,7 +89,7 @@ public class ImportCommand {
                 imported = importFromJellySpawn(sender);
                 break;
             default:
-                sender.sendMessage(lang.getMessage("import-source-unknown", source));
+                ColorUtils.sendMessage(sender, lang.getMessage("import-source-unknown", source));
                 showAvailable(sender);
                 return true;
         }
@@ -98,12 +99,12 @@ public class ImportCommand {
             // Mark as imported
             plugin.getConfig().set("imported." + source, true);
             plugin.saveConfig();
-            sender.sendMessage(lang.getMessage("import-success", imported, source));
+            ColorUtils.sendMessage(sender, lang.getMessage("import-success", imported, source));
             // Reload spawn cache
             plugin.getSpawnManager().loadCachesAsync(() ->
-                sender.sendMessage(lang.getMessage("import-reloaded")));
+                ColorUtils.sendMessage(sender, lang.getMessage("import-reloaded")));
         } else {
-            sender.sendMessage(lang.getMessage("import-no-spawns", source));
+            ColorUtils.sendMessage(sender, lang.getMessage("import-no-spawns", source));
         }
 
         return true;
@@ -132,20 +133,20 @@ public class ImportCommand {
     private int importFromEssentials(CommandSender sender) {
         File file = new File("plugins/Essentials/spawn.yml");
         if (!file.exists()) {
-            sender.sendMessage(lang.getMessage("import-file-not-found", "Essentials", file.getPath()));
+            ColorUtils.sendMessage(sender, lang.getMessage("import-file-not-found", "Essentials", file.getPath()));
             return 0;
         }
         try {
             YamlConfiguration yc = YamlConfiguration.loadConfiguration(file);
             Location spawn = parseEssentialsLocation(yc);
             if (spawn == null || spawn.getWorld() == null) {
-                sender.sendMessage(lang.getMessage("import-parse-error", "Essentials"));
+                ColorUtils.sendMessage(sender, lang.getMessage("import-parse-error", "Essentials"));
                 return 0;
             }
             plugin.getSpawnManager().setSpawn(spawn);
             return 1;
         } catch (Exception e) {
-            sender.sendMessage(lang.getMessage("import-error", "Essentials", e.getMessage()));
+            ColorUtils.sendMessage(sender, lang.getMessage("import-error", "Essentials", e.getMessage()));
             return 0;
         }
     }
@@ -170,13 +171,13 @@ public class ImportCommand {
     private int importFromCMI(CommandSender sender) {
         File file = new File("plugins/CMI/config.yml");
         if (!file.exists()) {
-            sender.sendMessage(lang.getMessage("import-file-not-found", "CMI", file.getPath()));
+            ColorUtils.sendMessage(sender, lang.getMessage("import-file-not-found", "CMI", file.getPath()));
             return 0;
         }
         try {
             YamlConfiguration yc = YamlConfiguration.loadConfiguration(file);
             if (!yc.isConfigurationSection("Spawn.Locations")) {
-                sender.sendMessage(lang.getMessage("import-no-spawns", "CMI"));
+                ColorUtils.sendMessage(sender, lang.getMessage("import-no-spawns", "CMI"));
                 return 0;
             }
             Set<String> keys = yc.getConfigurationSection("Spawn.Locations").getKeys(false);
@@ -194,7 +195,7 @@ public class ImportCommand {
             }
             return count;
         } catch (Exception e) {
-            sender.sendMessage(lang.getMessage("import-error", "CMI", e.getMessage()));
+            ColorUtils.sendMessage(sender, lang.getMessage("import-error", "CMI", e.getMessage()));
             return 0;
         }
     }
@@ -219,7 +220,7 @@ public class ImportCommand {
     private int importFromSpawnPlus(CommandSender sender) {
         File file = new File("plugins/SpawnPlus/spawns.yml");
         if (!file.exists()) {
-            sender.sendMessage(lang.getMessage("import-file-not-found", "SpawnPlus", file.getPath()));
+            ColorUtils.sendMessage(sender, lang.getMessage("import-file-not-found", "SpawnPlus", file.getPath()));
             return 0;
         }
         try {
@@ -239,7 +240,7 @@ public class ImportCommand {
             }
             return count;
         } catch (Exception e) {
-            sender.sendMessage(lang.getMessage("import-error", "SpawnPlus", e.getMessage()));
+            ColorUtils.sendMessage(sender, lang.getMessage("import-error", "SpawnPlus", e.getMessage()));
             return 0;
         }
     }
@@ -251,7 +252,7 @@ public class ImportCommand {
     private int importFromSpawnX(CommandSender sender) {
         File file = new File("plugins/SpawnX/spawns.yml");
         if (!file.exists()) {
-            sender.sendMessage(lang.getMessage("import-file-not-found", "SpawnX", file.getPath()));
+            ColorUtils.sendMessage(sender, lang.getMessage("import-file-not-found", "SpawnX", file.getPath()));
             return 0;
         }
         try {
@@ -271,7 +272,7 @@ public class ImportCommand {
             }
             return count;
         } catch (Exception e) {
-            sender.sendMessage(lang.getMessage("import-error", "SpawnX", e.getMessage()));
+            ColorUtils.sendMessage(sender, lang.getMessage("import-error", "SpawnX", e.getMessage()));
             return 0;
         }
     }
@@ -283,7 +284,7 @@ public class ImportCommand {
     private int importFromSpawnControl(CommandSender sender) {
         File file = new File("plugins/SpawnControl/spawns.yml");
         if (!file.exists()) {
-            sender.sendMessage(lang.getMessage("import-file-not-found", "SpawnControl", file.getPath()));
+            ColorUtils.sendMessage(sender, lang.getMessage("import-file-not-found", "SpawnControl", file.getPath()));
             return 0;
         }
         try {
@@ -303,7 +304,7 @@ public class ImportCommand {
             }
             return count;
         } catch (Exception e) {
-            sender.sendMessage(lang.getMessage("import-error", "SpawnControl", e.getMessage()));
+            ColorUtils.sendMessage(sender, lang.getMessage("import-error", "SpawnControl", e.getMessage()));
             return 0;
         }
     }
@@ -315,7 +316,7 @@ public class ImportCommand {
     private int importFromDeluxeSpawn(CommandSender sender) {
         File file = new File("plugins/DeluxeSpawn/spawns.yml");
         if (!file.exists()) {
-            sender.sendMessage(lang.getMessage("import-file-not-found", "DeluxeSpawn", file.getPath()));
+            ColorUtils.sendMessage(sender, lang.getMessage("import-file-not-found", "DeluxeSpawn", file.getPath()));
             return 0;
         }
         try {
@@ -335,7 +336,7 @@ public class ImportCommand {
             }
             return count;
         } catch (Exception e) {
-            sender.sendMessage(lang.getMessage("import-error", "DeluxeSpawn", e.getMessage()));
+            ColorUtils.sendMessage(sender, lang.getMessage("import-error", "DeluxeSpawn", e.getMessage()));
             return 0;
         }
     }
@@ -347,7 +348,7 @@ public class ImportCommand {
     private int importFromJellySpawn(CommandSender sender) {
         File file = new File("plugins/JellySpawn/spawns.yml");
         if (!file.exists()) {
-            sender.sendMessage(lang.getMessage("import-file-not-found", "JellySpawn", file.getPath()));
+            ColorUtils.sendMessage(sender, lang.getMessage("import-file-not-found", "JellySpawn", file.getPath()));
             return 0;
         }
         try {
@@ -367,7 +368,7 @@ public class ImportCommand {
             }
             return count;
         } catch (Exception e) {
-            sender.sendMessage(lang.getMessage("import-error", "JellySpawn", e.getMessage()));
+            ColorUtils.sendMessage(sender, lang.getMessage("import-error", "JellySpawn", e.getMessage()));
             return 0;
         }
     }
@@ -406,7 +407,7 @@ public class ImportCommand {
     }
 
     private void showUsage(CommandSender sender) {
-        sender.sendMessage(lang.getMessageUnprefixed("import-usage"));
+        ColorUtils.sendMessage(sender, lang.getMessageUnprefixed("import-usage"));
         showAvailable(sender);
     }
 
@@ -416,6 +417,6 @@ public class ImportCommand {
             sb.append(SOURCES.get(i));
             if (i < SOURCES.size() - 1) sb.append(", ");
         }
-        sender.sendMessage(lang.getMessageUnprefixed("import-available").replace("{0}", sb.toString()));
+        ColorUtils.sendMessage(sender, lang.getMessageUnprefixed("import-available").replace("{0}", sb.toString()));
     }
 }

@@ -7,10 +7,6 @@ import com.fabian.xsetspawn.utils.HologramUtil;
 import com.fabian.xsetspawn.utils.VisualUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Sound;
-import org.bukkit.boss.BarColor;
-import org.bukkit.boss.BarStyle;
-import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -18,14 +14,56 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import com.fabian.xsetspawn.utils.ParticleUtil;
 import com.fabian.xsetspawn.utils.SchedulerUtil;
 
-import java.util.HashMap;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Manages delayed teleportation with countdown, visual effects, and cancellation.
+ * Uses reflection for BossBar (1.9+) and Sound enum constants to maintain 1.8.8 compatibility.
+ */
 public class DelayManager implements Listener {
 
     private final XSetSpawn plugin;
     private final Map<UUID, TeleportSession> pendingTeleports = new java.util.concurrent.ConcurrentHashMap<>();
+
+    // --- BossBar reflection (lazy, 1.9+ only) ---
+    private static volatile Class<?> bossBarClass;
+    private static volatile Class<?> barColorClass;
+    private static volatile Class<?> barStyleClass;
+    private static volatile boolean bossBarAvailable = false;
+
+    static {
+        try {
+            bossBarClass = Class.forName("org.bukkit.boss.BossBar");
+            barColorClass = Class.forName("org.bukkit.boss.BarColor");
+            barStyleClass = Class.forName("org.bukkit.boss.BarStyle");
+            bossBarAvailable = true;
+        } catch (ClassNotFoundException ignored) {
+            // Running on 1.8.8 — BossBar API not available
+        }
+    }
+
+    // Cached reflection methods for BossBar
+    private static volatile Method bossBarSetProgress;
+    private static volatile Method bossBarSetTitle;
+    private static volatile Method bossBarRemovePlayer;
+    private static volatile Method bossBarRemoveAll;
+    private static volatile Method bossBarAddPlayer;
+
+    private static void ensureBossBarMethods() {
+        if (bossBarSetProgress != null) return;
+        synchronized (DelayManager.class) {
+            if (bossBarSetProgress != null) return;
+            try {
+                bossBarSetProgress = bossBarClass.getMethod("setProgress", double.class);
+                bossBarSetTitle = bossBarClass.getMethod("setTitle", String.class);
+                bossBarRemovePlayer = bossBarClass.getMethod("removePlayer", Player.class);
+                bossBarRemoveAll = bossBarClass.getMethod("removeAll");
+                bossBarAddPlayer = bossBarClass.getMethod("addPlayer", Player.class);
+            } catch (NoSuchMethodException ignored) {}
+        }
+    }
 
     public DelayManager(XSetSpawn plugin) {
         this.plugin = plugin;
@@ -55,7 +93,7 @@ public class DelayManager implements Listener {
             VisualUtil.sendTitle(player, title, subtitle, config.titleFadeIn, config.titleStay, config.titleFadeOut);
         }
 
-        final BossBar bossBar = createBossBar(player, seconds);
+        final Object bossBar = createBossBar(player, seconds);
 
         boolean useHolo = config.hologramEnabled;
         if (useHolo) {
@@ -76,21 +114,26 @@ public class DelayManager implements Listener {
         }
 
         final SchedulerUtil.TaskWrapper finalParticleTask = particleTask;
-        
+
         SchedulerUtil.TaskWrapper countdownTask = SchedulerUtil.runEntityTimer(plugin, player, new Runnable() {
             int timeLeft = seconds;
-            
+
             @Override
             public void run() {
                 if (!player.isOnline()) {
                     cancelTeleport(player);
                     return;
                 }
-                
+
                 if (timeLeft > 0) {
-                    // Play Tick Sound
+                    // Play Tick Sound (1.9+ name, gracefully degrades on 1.8.8)
                     if (config.countdownSoundsEnabled) {
-                        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1.0f, 1.0f);
+                        try {
+                            player.playSound(player.getLocation(),
+                                    org.bukkit.Sound.valueOf("BLOCK_NOTE_BLOCK_HAT"), 1.0f, 1.0f);
+                        } catch (Throwable ignored) {
+                            // Sound name doesn't exist on this version
+                        }
                     }
 
                     if (config.actionbarEnabled) {
@@ -103,8 +146,10 @@ public class DelayManager implements Listener {
                         VisualUtil.sendTitle(player, title, subtitle, 0, 30, 0);
                     }
                     if (bossBar != null) {
-                        bossBar.setProgress((double) timeLeft / seconds);
-                        bossBar.setTitle(plugin.getLanguageManager().getMessageUnprefixed("actionbar-teleporting", timeLeft));
+                        try {
+                            bossBarSetProgress.invoke(bossBar, (double) timeLeft / seconds);
+                            bossBarSetTitle.invoke(bossBar, plugin.getLanguageManager().getMessageUnprefixed("actionbar-teleporting", timeLeft));
+                        } catch (Throwable ignored) {}
                     }
                     if (useHolo) {
                         HologramUtil.updateHologram(player, config.hologramText.replace("{0}", String.valueOf(timeLeft)));
@@ -112,11 +157,16 @@ public class DelayManager implements Listener {
                     timeLeft--;
                 } else {
                     cancelTeleport(player);
-                    
+
                     if (player.isOnline()) {
-                        // Play Final Sound
+                        // Play Final Sound (1.9+ name, gracefully degrades on 1.8.8)
                         if (config.countdownSoundsEnabled) {
-                            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 2.0f);
+                            try {
+                                player.playSound(player.getLocation(),
+                                        org.bukkit.Sound.valueOf("BLOCK_NOTE_BLOCK_PLING"), 1.0f, 2.0f);
+                            } catch (Throwable ignored) {
+                                // Sound name doesn't exist on this version
+                            }
                         }
 
                         // Economy
@@ -127,7 +177,7 @@ public class DelayManager implements Listener {
                                 player.sendMessage(plugin.getLanguageManager().getMessage("teleport-cost", plugin.getVaultHook().format(cost)));
                             }
                         }
-                        
+
                         SchedulerUtil.teleport(plugin, player, location, () -> {
                             if (!player.isOnline()) return;
 
@@ -174,14 +224,19 @@ public class DelayManager implements Listener {
         pendingTeleports.put(player.getUniqueId(), new TeleportSession(countdownTask, finalParticleTask, bossBar, player.getUniqueId()));
     }
 
-    private BossBar createBossBar(Player player, int seconds) {
+    /**
+     * Creates a BossBar via reflection. Returns null on 1.8.8 or when disabled.
+     */
+    private Object createBossBar(Player player, int seconds) {
         ManagerConfig config = plugin.getManagerConfig();
-        if (!config.bossbarEnabled) return null;
+        if (!config.bossbarEnabled || !bossBarAvailable) return null;
         try {
-            BarColor color = BarColor.valueOf(config.bossbarColor);
-            BarStyle style = BarStyle.valueOf(config.bossbarStyle);
-            BossBar bar = Bukkit.createBossBar(plugin.getLanguageManager().getMessageUnprefixed("actionbar-teleporting", seconds), color, style);
-            bar.addPlayer(player);
+            ensureBossBarMethods();
+            Object color = Enum.valueOf((Class<Enum>) barColorClass, config.bossbarColor);
+            Object style = Enum.valueOf((Class<Enum>) barStyleClass, config.bossbarStyle);
+            Object bar = Bukkit.class.getMethod("createBossBar", String.class, barColorClass, barStyleClass)
+                    .invoke(Bukkit, plugin.getLanguageManager().getMessageUnprefixed("actionbar-teleporting", seconds), color, style);
+            bossBarAddPlayer.invoke(bar, player);
             return bar;
         } catch (Throwable t) {
             return null;
@@ -239,10 +294,10 @@ public class DelayManager implements Listener {
     private class TeleportSession {
         private final SchedulerUtil.TaskWrapper teleportTask;
         private final SchedulerUtil.TaskWrapper particleTask;
-        private final BossBar bossBar;
+        private final Object bossBar; // Held as Object — accessed via reflection
         private final UUID playerUuid;
 
-        public TeleportSession(SchedulerUtil.TaskWrapper teleportTask, SchedulerUtil.TaskWrapper particleTask, BossBar bossBar, UUID playerUuid) {
+        public TeleportSession(SchedulerUtil.TaskWrapper teleportTask, SchedulerUtil.TaskWrapper particleTask, Object bossBar, UUID playerUuid) {
             this.teleportTask = teleportTask;
             this.particleTask = particleTask;
             this.bossBar = bossBar;
@@ -254,21 +309,25 @@ public class DelayManager implements Listener {
                 teleportTask.cancel();
             if (particleTask != null)
                 particleTask.cancel();
-            
+
             Player player = Bukkit.getPlayer(playerUuid);
             if (player != null && player.isOnline()) {
                 SchedulerUtil.runEntity(plugin, player, () -> {
-                    if (bossBar != null) {
-                        try { bossBar.removePlayer(player); bossBar.removeAll(); } catch (Throwable ignored) {}
-                    }
+                    removeBossBar(player);
                     HologramUtil.removeHologram(player);
                 });
             } else {
-                if (bossBar != null) {
-                    try { bossBar.removeAll(); } catch (Throwable ignored) {}
-                }
+                removeBossBar(null);
+            }
+        }
+
+        private void removeBossBar(Player player) {
+            if (bossBar != null) {
+                try {
+                    if (player != null) bossBarRemovePlayer.invoke(bossBar, player);
+                    bossBarRemoveAll.invoke(bossBar);
+                } catch (Throwable ignored) {}
             }
         }
     }
 }
-

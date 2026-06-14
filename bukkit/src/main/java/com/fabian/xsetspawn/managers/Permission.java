@@ -24,7 +24,8 @@ public enum Permission {
     BACK("back"),
     DELSPAWN("delspawn"),
     LOCATE("locate"),
-    SPAWN_ON_JOIN("spawn-on-join");
+    SPAWN_ON_JOIN("spawn-on-join"),
+    FORCEMESSAGES("admin.forcemessages");
 
     private final String node;
 

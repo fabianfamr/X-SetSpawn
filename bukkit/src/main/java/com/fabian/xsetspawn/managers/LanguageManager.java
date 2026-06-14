@@ -8,9 +8,14 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
+import java.util.Set;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -86,14 +91,14 @@ public class LanguageManager {
             this.currentLanguage = "en";
         }
 
-        this.languageConfig = YamlConfiguration.loadConfiguration(languageFile);
+        this.languageConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(new FileInputStream(languageFile), StandardCharsets.UTF_8));
 
         InputStream defaultStream = plugin.getResource("messages/" + currentLanguage + ".yml");
         if (defaultStream == null && !currentLanguage.equals("en")) {
             defaultStream = plugin.getResource("messages/en.yml");
         }
         if (defaultStream != null) {
-            YamlConfiguration defaultConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(defaultStream));
+            YamlConfiguration defaultConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(defaultStream, StandardCharsets.UTF_8));
             languageConfig.setDefaults(defaultConfig);
             languageConfig.options().copyDefaults(true);
 
@@ -256,6 +261,154 @@ public class LanguageManager {
             plugin.saveResource(resourcePath, false);
         }
         return resourcePath;
+    }
+
+    // ==========================================
+    //       Force Messages Methods
+    // ==========================================
+
+    /**
+     * Adds missing keys from the JAR default to an existing language file on disk.
+     * If the file is the currently active language, it is also reloaded into memory.
+     *
+     * @param langCode the language code (e.g. "en", "es")
+     * @return true if the file was updated and/or reloaded, false if the language was not found
+     */
+    public boolean forceReloadMessages(String langCode) {
+        String lang = langCode.toLowerCase();
+        File langFile = new File(plugin.getDataFolder(), "messages/" + lang + ".yml");
+        if (!langFile.exists()) return false;
+
+        // Load existing file on disk
+        YamlConfiguration diskConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(new FileInputStream(langFile), StandardCharsets.UTF_8));
+
+        // Load defaults from JAR
+        InputStream jarStream = plugin.getResource("messages/" + lang + ".yml");
+        if (jarStream == null) return false;
+        YamlConfiguration jarConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(jarStream, StandardCharsets.UTF_8));
+
+        // Copy missing keys from JAR defaults to disk config
+        boolean changed = false;
+        Set<String> jarKeys = jarConfig.getKeys(true);
+        for (String key : jarKeys) {
+            if (!diskConfig.contains(key)) {
+                diskConfig.set(key, jarConfig.get(key));
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            try {
+                diskConfig.save(langFile);
+            } catch (Exception e) {
+                plugin.getLogger().warning("Could not save updated language file " + lang + ".yml: " + e.getMessage());
+            }
+        }
+
+        // Reload if this is the active language
+        if (lang.equals(this.currentLanguage)) {
+            loadLanguage();
+            return true;
+        }
+        return changed;
+    }
+
+    /**
+     * Adds missing keys to ALL language files on disk. Reloads if the active language was updated.
+     *
+     * @return the number of files updated
+     */
+    public int forceReloadAllMessages() {
+        int count = 0;
+        for (String lang : getAvailableLanguages()) {
+            File langFile = new File(plugin.getDataFolder(), "messages/" + lang + ".yml");
+            if (!langFile.exists()) continue;
+
+            InputStream jarStream = plugin.getResource("messages/" + lang + ".yml");
+            if (jarStream == null) continue;
+            YamlConfiguration jarConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(jarStream, StandardCharsets.UTF_8));
+
+            YamlConfiguration diskConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(new FileInputStream(langFile), StandardCharsets.UTF_8));
+            boolean changed = false;
+            Set<String> jarKeys = jarConfig.getKeys(true);
+            for (String key : jarKeys) {
+                if (!diskConfig.contains(key)) {
+                    diskConfig.set(key, jarConfig.get(key));
+                    changed = true;
+                }
+            }
+
+            if (changed) {
+                try {
+                    diskConfig.save(langFile);
+                    count++;
+                } catch (Exception e) {
+                    plugin.getLogger().warning("Could not save updated language file " + lang + ".yml: " + e.getMessage());
+                }
+            }
+        }
+        // Reload active language
+        loadLanguage();
+        return count;
+    }
+
+    /**
+     * Deletes an existing language file and extracts a fresh copy from the JAR.
+     * If the file is the currently active language, it is also reloaded into memory.
+     *
+     * @param langCode the language code (e.g. "en", "es")
+     * @return true if the file was regenerated, false if no JAR default exists
+     */
+    public boolean forceResetMessages(String langCode) {
+        String lang = langCode.toLowerCase();
+        String resourcePath = "messages/" + lang + ".yml";
+
+        // Check if the JAR contains this resource
+        InputStream jarStream = plugin.getResource(resourcePath);
+        if (jarStream == null) return false;
+
+        File langFile = new File(plugin.getDataFolder(), resourcePath);
+
+        // Delete existing file
+        if (langFile.exists()) {
+            langFile.delete();
+        }
+
+        // Extract fresh copy from JAR
+        plugin.saveResource(resourcePath, true);
+
+        // Reload if this is the active language
+        if (lang.equals(this.currentLanguage)) {
+            loadLanguage();
+            return true;
+        }
+        return true;
+    }
+
+    /**
+     * Regenerates ALL language files that have a JAR default.
+     *
+     * @return the number of files regenerated
+     */
+    public int forceResetAllMessages() {
+        int count = 0;
+        // Get languages that exist on disk
+        java.util.List<String> diskLangs = getAvailableLanguages();
+        for (String lang : diskLangs) {
+            String resourcePath = "messages/" + lang + ".yml";
+            InputStream jarStream = plugin.getResource(resourcePath);
+            if (jarStream == null) continue;
+
+            File langFile = new File(plugin.getDataFolder(), resourcePath);
+            if (langFile.exists()) {
+                langFile.delete();
+            }
+            plugin.saveResource(resourcePath, true);
+            count++;
+        }
+        // Reload active language
+        loadLanguage();
+        return count;
     }
 
     private String getFallbackMessage(String key) {

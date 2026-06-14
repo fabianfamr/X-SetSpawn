@@ -367,7 +367,7 @@ public class ColorUtils {
             return;
         }
         if (!(sender instanceof Player)) {
-            sender.sendMessage(formatToLegacy(message));
+            sender.sendMessage(ChatColor.stripColor(formatToLegacy(message)));
             return;
         }
         Player player = (Player) sender;
@@ -410,7 +410,7 @@ public class ColorUtils {
                         player.sendMessage(legacy);
                     }
                 }
-                Bukkit.getConsoleSender().sendMessage(legacy);
+                Bukkit.getConsoleSender().sendMessage(ChatColor.stripColor(legacy));
                 return;
             }
         }

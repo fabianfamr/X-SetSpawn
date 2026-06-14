@@ -128,3 +128,18 @@ config-reloaded: "&aConfiguración recargada correctamente."
 locate-usage: "&7Uso: &f/xss locate <idioma>&7 para cambiar al instante"
 locate-not-found: "&cArchivo de idioma &e{0}.yml&c no encontrado en messages/."
 locate-changed: "&aIdioma cambiado a &e{0}&a. Configuración recargada."
+
+# ============================================
+#         Comando Force Messages
+# ============================================
+force-messages-usage: "&7Uso: &e/xss forcemessages <new|keep> <all|idioma>"
+force-messages-current: "&7Idioma actual: &e{0}"
+force-messages-success: "&aArchivo de mensajes '&e{0}&a' actualizado (claves faltantes añadidas) y recargado."
+force-messages-no-changes: "&7Archivo de mensajes '&e{0}&7' actualizado en disco, pero no es el idioma activo."
+force-messages-all: "&aSe actualizaron &e{0}&a archivo(s) de idioma con claves faltantes."
+force-messages-reset-success: "&aArchivo de mensajes '&e{0}&a' regenerado desde valores predeterminados y recargado."
+force-messages-reset-no-active: "&7Archivo de mensajes '&e{0}&7' regenerado desde valores predeterminados, pero no es el idioma activo."
+force-messages-reset-all: "&aRegenerados &e{0}&a archivo(s) de idioma desde valores predeterminados."
+force-messages-invalid-mode: "&cModo inválido. Usa &enew&c o &ekeep&c."
+language-not-found: "&cIdioma no encontrado. Disponibles: &e{0}"
+language-list: "&7Idiomas disponibles: &e{0}"

@@ -1,6 +1,7 @@
 package com.fabian.xsetspawn.commands;
 
 import com.fabian.xsetspawn.XSetSpawn;
+import com.fabian.xsetspawn.utils.ColorUtils;
 import com.fabian.xsetspawn.utils.DebugLogger;
 import com.fabian.xsetspawn.managers.ManagerConfig;
 import com.fabian.xsetspawn.managers.Permission;
@@ -37,7 +38,7 @@ public class SetSpawnCommand implements TabExecutor {
         // Permission check
         if (!Permission.SETSPAWN.has(sender)) {
             DebugLogger.debug("Command", "Permission denied for /setspawn: " + sender.getName());
-            sender.sendMessage(languageManager.getMessage("no-permission"));
+            ColorUtils.sendMessage(sender, languageManager.getMessage("no-permission"));
             return true;
         }
 
@@ -62,7 +63,7 @@ public class SetSpawnCommand implements TabExecutor {
             }
             Player player = (Player) sender;
             spawnManager.setFirstJoinSpawn(player.getLocation());
-            sender.sendMessage(languageManager.getMessage("spawn-firstjoin-set"));
+            ColorUtils.sendMessage(sender, languageManager.getMessage("spawn-firstjoin-set"));
             return true;
         }
 
@@ -81,14 +82,14 @@ public class SetSpawnCommand implements TabExecutor {
                 if (args.length >= 4 && !isNumericOrTilde(args[3])) {
                     world = Bukkit.getWorld(args[3]);
                     if (world == null) {
-                        sender.sendMessage("§cWorld '" + args[3] + "' not found!");
+                        ColorUtils.sendMessage(sender, "§cWorld '" + args[3] + "' not found!");
                         return true;
                     }
                 } else {
                     if (sender instanceof Player) {
                         world = ((Player) sender).getWorld();
                     } else {
-                        sender.sendMessage("§cConsole must specify a world: /setspawn <x> <y> <z> <world>");
+                        ColorUtils.sendMessage(sender, "§cConsole must specify a world: /setspawn <x> <y> <z> <world>");
                         return true;
                     }
                 }
@@ -114,7 +115,7 @@ public class SetSpawnCommand implements TabExecutor {
                 return true;
             }
             if (!config.namedSpawns) {
-                sender.sendMessage(languageManager.getMessage("named-spawns-disabled"));
+                ColorUtils.sendMessage(sender, languageManager.getMessage("named-spawns-disabled"));
                 return true;
             }
             Player player = (Player) sender;
@@ -133,7 +134,7 @@ public class SetSpawnCommand implements TabExecutor {
                 double z = parseCoord(sender, args[3], "Z");
 
                 if (!config.namedSpawns) {
-                    sender.sendMessage(languageManager.getMessage("named-spawns-disabled"));
+                    ColorUtils.sendMessage(sender, languageManager.getMessage("named-spawns-disabled"));
                     return true;
                 }
 
@@ -141,14 +142,14 @@ public class SetSpawnCommand implements TabExecutor {
                 if (args.length >= 5 && !isNumericOrTilde(args[4])) {
                     world = Bukkit.getWorld(args[4]);
                     if (world == null) {
-                        sender.sendMessage("§cWorld '" + args[4] + "' not found!");
+                        ColorUtils.sendMessage(sender, "§cWorld '" + args[4] + "' not found!");
                         return true;
                     }
                 } else {
                     if (sender instanceof Player) {
                         world = ((Player) sender).getWorld();
                     } else {
-                        sender.sendMessage("§cConsole must specify a world when using named spawns with coordinates.");
+                        ColorUtils.sendMessage(sender, "§cConsole must specify a world when using named spawns with coordinates.");
                         return true;
                     }
                 }
@@ -167,7 +168,7 @@ public class SetSpawnCommand implements TabExecutor {
         }
 
         // Catch-all usage message
-        sender.sendMessage("§cUsage: /setspawn | /setspawn <name> | /setspawn <x> <y> <z> | /setspawn <name> <x> <y> <z>");
+        ColorUtils.sendMessage(sender, "§cUsage: /setspawn | /setspawn <name> | /setspawn <x> <y> <z> | /setspawn <name> <x> <y> <z>");
         return true;
     }
 
@@ -196,11 +197,11 @@ public class SetSpawnCommand implements TabExecutor {
 
     private void sendSetSpawnMessage(CommandSender sender, World world, String spawnName) {
         if (spawnName != null) {
-            sender.sendMessage(languageManager.getMessage("spawn-set-named", spawnName));
+            ColorUtils.sendMessage(sender, languageManager.getMessage("spawn-set-named", spawnName));
         } else if (config.perWorld) {
-            sender.sendMessage(languageManager.getMessage("spawn-set-world", world.getName()));
+            ColorUtils.sendMessage(sender, languageManager.getMessage("spawn-set-world", world.getName()));
         } else {
-            sender.sendMessage(languageManager.getMessage("spawn-set"));
+            ColorUtils.sendMessage(sender, languageManager.getMessage("spawn-set"));
         }
     }
 

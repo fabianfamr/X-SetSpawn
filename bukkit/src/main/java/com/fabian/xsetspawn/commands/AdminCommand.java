@@ -35,7 +35,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         DebugLogger.debug("Command", "/xsetspawn executed by " + sender.getName() + " with subcommand: " + (args.length > 0 ? args[0] : "none"));
         if (!Permission.ADMIN.has(sender)) {
-            sender.sendMessage(languageManager.getMessage("no-permission"));
+            ColorUtils.sendMessage(sender, languageManager.getMessage("no-permission"));
             return true;
         }
 
@@ -50,7 +50,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
             case "reload":
             case "rl":
                 if (!Permission.RELOAD.has(sender)) {
-                    sender.sendMessage(languageManager.getMessage("no-permission"));
+                    ColorUtils.sendMessage(sender, languageManager.getMessage("no-permission"));
                     return true;
                 }
                 DebugLogger.debug("Command", "Reloading plugin configuration...");
@@ -59,36 +59,35 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
                 plugin.getConfigManager().reloadConfiguration();
                 plugin.getLanguageManager().reloadLanguage();
                 plugin.getSpawnManager().loadCachesAsync(
-                        () -> sender.sendMessage(languageManager.getMessage("config-reloaded")));
+                        () -> ColorUtils.sendMessage(sender, languageManager.getMessage("config-reloaded")));
                 plugin.setupMetrics();
                 break;
 
             case "update":
             case "upd":
                 if (!Permission.UPDATE.has(sender)) {
-                    sender.sendMessage(languageManager.getMessage("no-permission"));
+                    ColorUtils.sendMessage(sender, languageManager.getMessage("no-permission"));
                     return true;
                 }
                 if (plugin.getUpdateChecker() != null) {
-                    sender.sendMessage(languageManager.getMessage("update-checking"));
+                    ColorUtils.sendMessage(sender, languageManager.getMessage("update-checking"));
                     plugin.getUpdateChecker().checkForUpdates(sender);
                 } else {
-                    sender.sendMessage(languageManager.getMessage("update-disabled"));
+                    ColorUtils.sendMessage(sender, languageManager.getMessage("update-disabled"));
                 }
                 break;
 
             case "version":
             case "v":
             case "ver":
-                sender.sendMessage(languageManager.getMessageUnprefixed("version-header"));
-                sender.sendMessage(languageManager.getMessageUnprefixed("version-title"));
-                sender.sendMessage(languageManager.getMessageUnprefixed("version-info-version",
-                        plugin.getDescription().getVersion()));
-                sender.sendMessage(languageManager.getMessageUnprefixed("version-info-author",
-                        String.join(", ", plugin.getDescription().getAuthors())));
-                sender.sendMessage(languageManager.getMessageUnprefixed("version-info-platform",
-                        (plugin.getServer().getName().contains("Folia") ? "Folia" : "Bukkit/Paper")));
-                sender.sendMessage(languageManager.getMessageUnprefixed("version-footer"));
+                boolean vConsole = !(sender instanceof Player);
+                sendLine(sender, "version-header", vConsole);
+                sendLine(sender, "version-title", vConsole);
+                sendLine(sender, "version-info-version", vConsole, plugin.getDescription().getVersion());
+                sendLine(sender, "version-info-author", vConsole, String.join(", ", plugin.getDescription().getAuthors()));
+                sendLine(sender, "version-info-platform", vConsole,
+                        (plugin.getServer().getName().contains("Folia") ? "Folia" : "Bukkit/Paper"));
+                sendLine(sender, "version-footer", vConsole);
                 break;
 
             case "setspawn":
@@ -117,6 +116,15 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
             case "language":
             case "lang":
                 handleLocateCommand(sender, args);
+                break;
+
+            case "forcemessages":
+            case "fm":
+                if (!Permission.FORCEMESSAGES.has(sender)) {
+                    ColorUtils.sendMessage(sender, languageManager.getMessage("no-permission"));
+                    return true;
+                }
+                handleForceMessagesCommand(sender, args);
                 break;
 
             case "debug":
@@ -153,9 +161,9 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
         if (args.length < 2) {
             String current = languageManager.getCurrentLanguage();
             java.util.List<String> available = languageManager.getAvailableLanguages();
-            sender.sendMessage(languageManager.getMessageUnprefixed("locate-usage"));
-            sender.sendMessage(ColorUtils.formatToLegacy("&7Current: &f" + current));
-            sender.sendMessage(ColorUtils.formatToLegacy("&7Available: &f" + String.join(", ", available)));
+            ColorUtils.sendMessage(sender, languageManager.getMessageUnprefixed("locate-usage"));
+            ColorUtils.sendMessage(sender, ColorUtils.formatToLegacy("&7Current: &f" + current));
+            ColorUtils.sendMessage(sender, ColorUtils.formatToLegacy("&7Available: &f" + String.join(", ", available)));
             return;
         }
 
@@ -163,26 +171,107 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
         boolean success = languageManager.setLanguage(newLang);
 
         if (success) {
-            sender.sendMessage(languageManager.getMessage("locate-changed", newLang));
+            ColorUtils.sendMessage(sender, languageManager.getMessage("locate-changed", newLang));
         } else {
             java.util.List<String> available = languageManager.getAvailableLanguages();
-            sender.sendMessage(languageManager.getMessage("locate-not-found", newLang));
-            sender.sendMessage(ColorUtils.formatToLegacy("&7Available: &f" + String.join(", ", available)));
+            ColorUtils.sendMessage(sender, languageManager.getMessage("locate-not-found", newLang));
+            ColorUtils.sendMessage(sender, ColorUtils.formatToLegacy("&7Available: &f" + String.join(", ", available)));
         }
     }
 
     private void showHelp(CommandSender sender) {
-        sender.sendMessage(languageManager.getMessageUnprefixed("help-header"));
-        sender.sendMessage(languageManager.getMessageUnprefixed("help-spawn"));
-        sender.sendMessage(languageManager.getMessageUnprefixed("help-setspawn"));
-        sender.sendMessage(languageManager.getMessageUnprefixed("help-delspawn"));
-        sender.sendMessage(languageManager.getMessageUnprefixed("help-back"));
-        sender.sendMessage(languageManager.getMessageUnprefixed("help-reload"));
-        sender.sendMessage(languageManager.getMessageUnprefixed("help-locate"));
-        sender.sendMessage(languageManager.getMessageUnprefixed("help-version"));
-        sender.sendMessage(languageManager.getMessageUnprefixed("help-update"));
-        sender.sendMessage(languageManager.getMessageUnprefixed("help-help"));
-        sender.sendMessage(languageManager.getMessageUnprefixed("help-footer"));
+        boolean console = !(sender instanceof Player);
+        sendLine(sender, "help-header", console);
+        sendLine(sender, "help-spawn", console);
+        sendLine(sender, "help-setspawn", console);
+        sendLine(sender, "help-delspawn", console);
+        sendLine(sender, "help-back", console);
+        sendLine(sender, "help-reload", console);
+        sendLine(sender, "help-locate", console);
+        sendLine(sender, "help-version", console);
+        sendLine(sender, "help-update", console);
+        sendLine(sender, "help-help", console);
+        sendLine(sender, "help-footer", console);
+    }
+
+    /**
+     * Sends a language message, stripping § color codes when the sender
+     * is the console (avoids garbled characters on Windows CP437/CP850).
+     */
+    private void sendLine(CommandSender sender, String key, boolean strip) {
+        String msg = languageManager.getMessageUnprefixed(key);
+        sender.sendMessage(strip ? ChatColor.stripColor(msg) : msg);
+    }
+
+    /**
+     * Overload that accepts format arguments (e.g. version info placeholders).
+     */
+    private void sendLine(CommandSender sender, String key, boolean strip, Object... args) {
+        String msg = languageManager.getMessageUnprefixed(key, args);
+        sender.sendMessage(strip ? ChatColor.stripColor(msg) : msg);
+    }
+
+    private void handleForceMessagesCommand(CommandSender sender, String[] args) {
+        // /xss forcemessages → show current language + usage
+        if (args.length < 2) {
+            String current = languageManager.getCurrentLanguage();
+            java.util.List<String> available = languageManager.getAvailableLanguages();
+            ColorUtils.sendMessage(sender, languageManager.getMessageUnprefixed("force-messages-current", current));
+            ColorUtils.sendMessage(sender, languageManager.getMessageUnprefixed("force-messages-usage"));
+            ColorUtils.sendMessage(sender, languageManager.getMessageUnprefixed("language-list", String.join(", ", available)));
+            return;
+        }
+
+        String mode = args[1].toLowerCase();
+
+        // Validate mode
+        if (!mode.equals("keep") && !mode.equals("new")) {
+            ColorUtils.sendMessage(sender, languageManager.getMessage("force-messages-invalid-mode"));
+            return;
+        }
+
+        // /xss forcemessages <keep|new> → apply to all
+        if (args.length < 3 || args[2].equalsIgnoreCase("all")) {
+            if (mode.equals("keep")) {
+                int count = languageManager.forceReloadAllMessages();
+                ColorUtils.sendMessage(sender, languageManager.getMessage("force-messages-all", String.valueOf(count)));
+            } else {
+                int count = languageManager.forceResetAllMessages();
+                ColorUtils.sendMessage(sender, languageManager.getMessage("force-messages-reset-all", String.valueOf(count)));
+            }
+            return;
+        }
+
+        // /xss forcemessages <keep|new> <language>
+        String langCode = args[2].toLowerCase();
+        java.util.List<String> available = languageManager.getAvailableLanguages();
+        boolean langExists = available.stream().anyMatch(l -> l.equalsIgnoreCase(langCode));
+        if (!langExists) {
+            ColorUtils.sendMessage(sender, languageManager.getMessage("language-not-found", String.join(", ", available)));
+            return;
+        }
+
+        String current = languageManager.getCurrentLanguage();
+
+        if (mode.equals("keep")) {
+            boolean reloaded = languageManager.forceReloadMessages(langCode);
+            if (langCode.equalsIgnoreCase(current)) {
+                ColorUtils.sendMessage(sender, languageManager.getMessage("force-messages-success", langCode));
+            } else {
+                ColorUtils.sendMessage(sender, languageManager.getMessage("force-messages-no-changes", langCode));
+            }
+        } else {
+            boolean reset = languageManager.forceResetMessages(langCode);
+            if (!reset) {
+                ColorUtils.sendMessage(sender, languageManager.getMessage("language-not-found", String.join(", ", available)));
+                return;
+            }
+            if (langCode.equalsIgnoreCase(current)) {
+                ColorUtils.sendMessage(sender, languageManager.getMessage("force-messages-reset-success", langCode));
+            } else {
+                ColorUtils.sendMessage(sender, languageManager.getMessage("force-messages-reset-no-active", langCode));
+            }
+        }
     }
 
     @Override
@@ -199,6 +288,7 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
             completions.add("update");
             completions.add("import");
             completions.add("debug");
+            completions.add("forcemessages");
 
             return completions.stream()
                     .filter(s -> s.toLowerCase().startsWith(args[0].toLowerCase()))
@@ -226,6 +316,28 @@ public class AdminCommand implements CommandExecutor, TabCompleter {
                 || args[0].equalsIgnoreCase("lang"))) {
             return languageManager.getAvailableLanguages().stream()
                     .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
+                    .sorted()
+                    .collect(Collectors.toList());
+        }
+
+        // Suggest modes for /xss forcemessages <TAB>
+        if (args.length == 2 && (args[0].equalsIgnoreCase("forcemessages") || args[0].equalsIgnoreCase("fm"))) {
+            List<String> modes = new ArrayList<>();
+            modes.add("keep");
+            modes.add("new");
+            return modes.stream()
+                    .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
+                    .sorted()
+                    .collect(Collectors.toList());
+        }
+
+        // Suggest "all" + available languages for /xss forcemessages <keep|new> <TAB>
+        if (args.length == 3 && (args[0].equalsIgnoreCase("forcemessages") || args[0].equalsIgnoreCase("fm"))) {
+            List<String> targets = new ArrayList<>();
+            targets.add("all");
+            targets.addAll(languageManager.getAvailableLanguages());
+            return targets.stream()
+                    .filter(s -> s.toLowerCase().startsWith(args[2].toLowerCase()))
                     .sorted()
                     .collect(Collectors.toList());
         }
