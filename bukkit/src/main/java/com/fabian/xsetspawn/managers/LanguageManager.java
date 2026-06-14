@@ -91,7 +91,11 @@ public class LanguageManager {
             this.currentLanguage = "en";
         }
 
-        this.languageConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(new FileInputStream(languageFile), StandardCharsets.UTF_8));
+        try {
+            this.languageConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(new FileInputStream(languageFile), StandardCharsets.UTF_8));
+        } catch (java.io.FileNotFoundException e) {
+            this.languageConfig = YamlConfiguration.loadConfiguration(languageFile);
+        }
 
         InputStream defaultStream = plugin.getResource("messages/" + currentLanguage + ".yml");
         if (defaultStream == null && !currentLanguage.equals("en")) {
@@ -280,7 +284,12 @@ public class LanguageManager {
         if (!langFile.exists()) return false;
 
         // Load existing file on disk
-        YamlConfiguration diskConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(new FileInputStream(langFile), StandardCharsets.UTF_8));
+        YamlConfiguration diskConfig;
+        try {
+            diskConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(new FileInputStream(langFile), StandardCharsets.UTF_8));
+        } catch (java.io.FileNotFoundException e) {
+            diskConfig = YamlConfiguration.loadConfiguration(langFile);
+        }
 
         // Load defaults from JAR
         InputStream jarStream = plugin.getResource("messages/" + lang + ".yml");
@@ -328,7 +337,12 @@ public class LanguageManager {
             if (jarStream == null) continue;
             YamlConfiguration jarConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(jarStream, StandardCharsets.UTF_8));
 
-            YamlConfiguration diskConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(new FileInputStream(langFile), StandardCharsets.UTF_8));
+            YamlConfiguration diskConfig;
+            try {
+                diskConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(new FileInputStream(langFile), StandardCharsets.UTF_8));
+            } catch (java.io.FileNotFoundException e) {
+                diskConfig = YamlConfiguration.loadConfiguration(langFile);
+            }
             boolean changed = false;
             Set<String> jarKeys = jarConfig.getKeys(true);
             for (String key : jarKeys) {

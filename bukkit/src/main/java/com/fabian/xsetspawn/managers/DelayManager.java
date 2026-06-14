@@ -235,7 +235,7 @@ public class DelayManager implements Listener {
             Object color = Enum.valueOf((Class<Enum>) barColorClass, config.bossbarColor);
             Object style = Enum.valueOf((Class<Enum>) barStyleClass, config.bossbarStyle);
             Object bar = Bukkit.class.getMethod("createBossBar", String.class, barColorClass, barStyleClass)
-                    .invoke(Bukkit, plugin.getLanguageManager().getMessageUnprefixed("actionbar-teleporting", seconds), color, style);
+                    .invoke(null, plugin.getLanguageManager().getMessageUnprefixed("actionbar-teleporting", seconds), color, style);
             bossBarAddPlayer.invoke(bar, player);
             return bar;
         } catch (Throwable t) {
