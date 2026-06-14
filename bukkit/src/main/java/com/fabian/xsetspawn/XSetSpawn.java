@@ -27,6 +27,7 @@ import com.fabian.xsetspawn.utils.UpdateChecker;
 import com.fabian.xsetspawn.utils.DebugLogger;
 import com.fabian.xsetspawn.metrics.Metrics;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -173,10 +174,14 @@ public class XSetSpawn extends JavaPlugin implements Listener {
         // Initialize bStats Metrics
         setupMetrics();
 
-        getLogger().info(" ----------------------------------------------");
-        getLogger().info("   Enabled v" + getDescription().getVersion() + "! Enjoy spawning!");
-        getLogger().info("   Storage: " + managerConfig.storageType + " | Language: " + managerConfig.language);
-        getLogger().info(" ----------------------------------------------");
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                "&8[&bX-SetSpawn&8] &7----------------------------------------------"));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                "&8[&bX-SetSpawn&8]   &aEnabled v" + getDescription().getVersion() + "! Enjoy spawning!"));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                "&8[&bX-SetSpawn&8]   &7Storage: &f" + managerConfig.storageType + " &7| Language: &f" + managerConfig.language));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                "&8[&bX-SetSpawn&8] &7----------------------------------------------"));
     }
 
     @Override
@@ -193,9 +198,12 @@ public class XSetSpawn extends JavaPlugin implements Listener {
             storageManager.close();
         }
 
-        getLogger().info(" ----------------------------------------------");
-        getLogger().info("   Disabled v" + getDescription().getVersion() + "! Out.");
-        getLogger().info(" ----------------------------------------------");
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                "&8[&bX-SetSpawn&8] &7----------------------------------------------"));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                "&8[&bX-SetSpawn&8]   &cDisabled v" + getDescription().getVersion() + "! Out."));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                "&8[&bX-SetSpawn&8] &7----------------------------------------------"));
     }
 
     @EventHandler
@@ -307,14 +315,17 @@ public class XSetSpawn extends JavaPlugin implements Listener {
     }
 
     public void logInfo(String message) {
-        getLogger().info(message);
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                "&8[&bX-SetSpawn&8] " + message));
     }
 
     public void logWarning(String message) {
-        getLogger().warning(message);
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                "&8[&bX-SetSpawn&8] &e" + message));
     }
 
     public void logError(String message) {
-        getLogger().severe(message);
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                "&8[&bX-SetSpawn&8] &c" + message));
     }
 }
