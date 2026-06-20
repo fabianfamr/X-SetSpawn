@@ -9,6 +9,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -69,6 +71,16 @@ public class AliasManager {
                 @Override
                 public boolean execute(CommandSender sender, String label, String[] args) {
                     return pluginCommand.execute(sender, label, args);
+                }
+
+                @Override
+                public List<String> tabComplete(CommandSender sender, String alias, String[] args) {
+                    try {
+                        List<String> completions = pluginCommand.tabComplete(sender, alias, args);
+                        return completions != null ? completions : Collections.emptyList();
+                    } catch (Exception e) {
+                        return Collections.emptyList();
+                    }
                 }
             };
             proxy.setDescription("Alias for /" + commandName + " (X-SetSpawn)");
