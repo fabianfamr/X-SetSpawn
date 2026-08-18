@@ -10,6 +10,9 @@ import org.bukkit.entity.Player;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * BackManager - Stores players' previous locations in RAM.
@@ -31,6 +34,7 @@ public class BackManager {
     }
 
     private final Map<UUID, BackEntry> backLocations = new ConcurrentHashMap<>();
+    private ScheduledExecutorService cleanupExecutor;
 
     public BackManager(XSetSpawn plugin) {
         this.plugin = plugin;
@@ -38,17 +42,37 @@ public class BackManager {
 
     /**
      * Starts a periodic cleanup task to remove expired back locations from memory.
+     * Uses ScheduledExecutorService instead of Bukkit scheduler for Folia/Canvas compatibility.
      */
     public void startCleanupTask() {
-        org.bukkit.Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            long now = System.currentTimeMillis();
-            int expiresMinutes = plugin.getManagerConfig().backExpires;
-            if (expiresMinutes <= 0) return;
-            backLocations.entrySet().removeIf(entry -> {
-                long expiredAt = entry.getValue().timestamp + (expiresMinutes * 60_000L);
-                return now > expiredAt;
-            });
-        }, 20 * 60L, 20 * 60L); // Every 60 seconds
+        cleanupExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "X-SetSpawn-BackCleanup");
+            t.setDaemon(true);
+            return t;
+        });
+        cleanupExecutor.scheduleAtFixedRate(() -> {
+            try {
+                long now = System.currentTimeMillis();
+                int expiresMinutes = plugin.getManagerConfig().backExpires;
+                if (expiresMinutes <= 0) return;
+                backLocations.entrySet().removeIf(entry -> {
+                    long expiredAt = entry.getValue().timestamp + (expiresMinutes * 60_000L);
+                    return now > expiredAt;
+                });
+            } catch (Exception e) {
+                DebugLogger.debug("BackManager", "Error in cleanup task", e);
+            }
+        }, 60, 60, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Shuts down the cleanup executor. Called on plugin disable.
+     */
+    public void shutdown() {
+        if (cleanupExecutor != null) {
+            cleanupExecutor.shutdownNow();
+            cleanupExecutor = null;
+        }
     }
 
     /**

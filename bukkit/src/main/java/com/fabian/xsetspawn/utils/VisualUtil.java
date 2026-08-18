@@ -143,7 +143,8 @@ public class VisualUtil {
         fw.setFireworkMeta(fwm);
         
         // Schedule cleanup to prevent orphan firework entities
-        org.bukkit.Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        // Use SchedulerUtil for Folia/Canvas compatibility
+        SchedulerUtil.runRegionDelayed(plugin, location, () -> {
             if (fw.isValid()) fw.remove();
         }, (long)(power + 2) * 20L);
     }

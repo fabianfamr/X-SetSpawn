@@ -52,7 +52,9 @@ public class SpawnManager {
     public void loadCachesAsync(Runnable callback) {
         DebugLogger.debug("SpawnManager", "Loading spawn caches asynchronously...");
         storage.loadAll().thenAccept(allSpawns -> {
-            org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+            // ConcurrentHashMap is thread-safe; no need to schedule on Bukkit/Folia thread
+            // for the cache update itself. The logInfo uses ConsoleSender which is also safe.
+            try {
                 if (allSpawns != null) {
                     spawnCache.clear();
                     spawnCache.putAll(allSpawns);
@@ -63,7 +65,9 @@ public class SpawnManager {
                 if (callback != null) {
                     callback.run();
                 }
-            });
+            } catch (Exception e) {
+                DebugLogger.debug("SpawnManager", "Error loading spawn caches", e);
+            }
         });
     }
 

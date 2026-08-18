@@ -187,6 +187,10 @@ public class XSetSpawn extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         DebugLogger.debug("Init", "Plugin disabling...");
+        // Shut down BackManager cleanup executor
+        if (backManager != null) {
+            backManager.shutdown();
+        }
         // Clean up any active holograms (ArmorStands) to prevent orphaned entities
         com.fabian.xsetspawn.utils.HologramUtil.removeAll();
 
